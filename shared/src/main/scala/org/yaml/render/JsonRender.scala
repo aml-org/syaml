@@ -32,10 +32,21 @@ class JsonRender private () {
     else {
       render("[\n")
       indent()
-      seq.nodes foreach {
-        renderIndent().render(_).render(",\n")
+      var finished = false
+      val total = seq.nodes.size
+      var c     = 0
+      while (c < total) {
+        var node = seq.nodes(c)
+        renderIndent().render(node)
+        if (c < total-1) {
+          render(",\n")
+        } else {
+          render("\n")
+        }
+        c += 1
       }
-      chopLastComma()
+
+      // chopLastComma()
       dedent()
       renderIndent().render("]")
     }
@@ -47,10 +58,21 @@ class JsonRender private () {
     else {
       render("{\n")
       indent()
-      map.entries foreach { e =>
-        renderIndent().render(e.key).render(": ").render(e.value).render(",\n")
+      var finished = false
+      val total = map.entries.size
+      var c     = 0
+
+      while (c < total) {
+        var entry = map.entries(c)
+        renderIndent().render(entry.key).render(": ").render(entry.value)
+        if (c < total-1) {
+          render(",\n")
+        } else {
+          render("\n")
+        }
+        c += 1
       }
-      chopLastComma()
+      // chopLastComma()
       dedent()
       renderIndent().render("}")
     }
