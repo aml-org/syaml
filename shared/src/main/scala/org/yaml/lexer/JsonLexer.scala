@@ -1,6 +1,5 @@
 package org.yaml.lexer
 
-import org.mulesoft.lexer.CharSequenceLexerInput.InputState
 import org.mulesoft.lexer.LexerInput.EofChar
 import org.mulesoft.lexer.{BaseLexer, CharSequenceLexerInput, LexerInput, Position}
 import org.yaml.lexer.JsonLexer._
@@ -22,67 +21,41 @@ final class JsonLexer private (input: LexerInput, override val offsetPosition: (
     * Process all pending tokens. Trivial implementation just emit the EofToken
     * More complex ones can continue returning pending tokens until they emit the EofToken
     */
-  override protected def processPending(): Unit ={
-    if(stack.nonEmpty){
-      val last = tokenData
-      val current = input.createMark()
-      input.reset(InputState(last.range.lineFrom, last.range.columnFrom,last.start))
-      reset()
-      input.reset(current)
-      emit(Error)
-    }
-    emit(EndDocument, EndStream)
-  }
+  override protected def processPending(): Unit = emit(EndDocument)
 
   override protected def findToken(chr: Int): Unit = {
     chr match {
-      case '['                                                             => nodeStart(BeginSequence)
-      case '{'                                                             => nodeStart(BeginMapping)
-      case ']'                                                             => nodeEnd(EndSequence)
-      case '}'                                                             => nodeEnd(EndMapping)
-      case ':'                                                             => enterMapValue()
-      case ','                                                             => endEntry()
+      case '['                                                             => consumeAndEmit(BeginSequence)
+      case '{'                                                             => consumeAndEmit(BeginMapping)
+      case ']'                                                             => consumeAndEmit(EndSequence)
+      case '}'                                                             => consumeAndEmit(EndMapping)
+      case ':'                                                             => consumeAndEmit(Indicator)
+      case ','                                                             => consumeAndEmit(Indicator)
       case '"'                                                             => string()
       case '-' | '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => number()
       case '\n'                                                            => consumeAndEmit(LineBreak)
       case ' ' | '\t' | '\r' =>
         consumeWhile(isWhitespace)
         emit(WhiteSpace)
-      case 'n' => checkKeyword("null")
-      case 't' => checkKeyword("true")
-      case 'f' => checkKeyword("false")
-      case _ => tryToRecover()
+      case 'n' if !(stack.headOption contains Error)=> checkKeyword("null")
+      case 't' if !(stack.headOption contains Error)=> checkKeyword("true")
+      case 'f' if !(stack.headOption contains Error)=> checkKeyword("false")
+      case _ =>
+        advanceToTokens(Set('[',']','{','}', ':',','))
     }
   }
 
-  private def tryToRecover(): Unit = {
-    /* I use option in case that the json is only a scalar unquoted so there will not be any mark */
-    stack.headOption match {
-      case Some(BeginMapping) => advanceForError('}')
-      case Some(BeginPair)  => advanceForError(',',':','}')
-      case Some(EndPair) => advanceForError(',','}')
-      case Some(BeginSequence) => advanceForError(',',']')
-      case _ => advanceForError() // to the end
+  private def advanceToTokens(tokens:Set[Int]): Unit = {
+    while( (!tokens.contains(currentChar.toChar)) && nonEof){
+      consume()
     }
-  }
-
-  private def advanceForError(until: Int*):Unit = {
-    nodeStart(BeginScalar, indicator = false)
-    consumeWhile((c:Int) => (! until.contains(c)) && c != EofChar)
-    emitForMark(Error,Text)
-    nodeEnd(EndScalar, indicator = false)
-    if((stack.headOption contains BeginPair) && currentChar==','){ // try to compose entry value to avoid parser error.
-      stack = EndPair :: stack.tail
-      nodeStart(BeginScalar,indicator = false)
-      nodeEnd(EndScalar, indicator = false)
-    }
+    emit(Error)
   }
 
   private def endEntry(): Unit = {
     if(stack.headOption contains BeginPair) {
       // entry with key and without value. { a: a, a, a:a}
       stack = stack.tail
-      emit(EndPair)
     }
     consumeAndEmit(Indicator)
     if (stack.head == BeginMapping) stack = BeginPair :: stack
@@ -91,11 +64,12 @@ final class JsonLexer private (input: LexerInput, override val offsetPosition: (
   private def checkKeyword(str: String): Unit = {
     val l = check(str)
     if (l > 0) {
-      nodeStart(BeginScalar, indicator = false)
+      emit(BeginScalar)
       consume(l)
       emit(Text)
-      nodeEnd(EndScalar, indicator = false)
-    } else tryToRecover()
+      emit(EndScalar)
+    } else
+      advanceToTokens(Set(',',':'))
   }
 
   private def nodeStart(block: YamlToken, indicator: Boolean = true): Unit = {
@@ -107,15 +81,11 @@ final class JsonLexer private (input: LexerInput, override val offsetPosition: (
   }
 
   private def nodeEnd(block: YamlToken, indicator: Boolean = true): Unit = {
-    if((stack.headOption contains BeginPair) && block== EndMapping) stack = stack.tail
-
-    stack = stack.tail
-    if (indicator) consumeAndEmit(Indicator)
-    emit(block, EndNode)
-    if (stack.headOption contains EndPair) {
-      emit(EndPair)
+    if(block == EndMapping && (stack.headOption contains BeginMapping)){
       stack = stack.tail
     }
+    if (indicator) consumeAndEmit(Indicator)
+    emit(block)
   }
 
   private def enterMapValue() = {
@@ -125,7 +95,7 @@ final class JsonLexer private (input: LexerInput, override val offsetPosition: (
   }
 
   private def number(): Unit = {
-    nodeStart(BeginScalar, indicator = false)
+    emit(BeginScalar)
     consume('-')
     if (!consume('0')) {
       consume()
@@ -137,15 +107,16 @@ final class JsonLexer private (input: LexerInput, override val offsetPosition: (
       consumeWhile(isDigit)
     }
     emit(Text)
-    nodeEnd(EndScalar, indicator = false)
+    emit(EndScalar)
   }
 
-  private def string(): Unit = {
+  private def string(): Unit = { // todo: handle breaking lines (invalid in jsons)
     var hasText    = false
     def emitText(): Unit = if (hasText) { emit(Text); hasText = false }
 
-    nodeStart(BeginScalar)
-    while (currentChar != '"' && currentChar != EofChar ) {
+    emit(BeginScalar)
+    consumeAndEmit(Indicator)
+    while (currentChar != '"' && currentChar != EofChar) {
       if (currentChar == '\\') {
         emitText()
         emit(BeginEscape)
@@ -160,7 +131,8 @@ final class JsonLexer private (input: LexerInput, override val offsetPosition: (
       }
     }
     emitText()
-    nodeEnd(EndScalar)
+    consumeAndEmit(Indicator)
+    emit(EndScalar)
   }
 
 }

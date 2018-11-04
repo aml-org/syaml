@@ -1,8 +1,2 @@
 BeginDocument       0,  1,  0 ''
-BeginNode           0,  1,  0 ''
-BeginScalar         0,  1,  0 ''
 Error               0,  1,  0 'invalid'
-Text                0,  1,  0 'invalid'
-EndScalar           7,  1,  7 ''
-EndNode             7,  1,  7 ''
-EndDocument         7,  1,  7 ''

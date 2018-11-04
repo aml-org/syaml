@@ -68,7 +68,6 @@ abstract class BaseLexer[T <: Token](var input: LexerInput) extends Lexer[T] {
           val p = input.offset
           findToken(currentChar)
           if (p == input.offset) {
-              println(currentChar, p)
               advance()
           }
 

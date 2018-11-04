@@ -15,7 +15,7 @@ trait ParseInvalidJsonTest extends FunSuite {
 
   private val jsonDir = Fs syncFile "shared/src/test/data/invalid-json"
 
-  ignore("Parse unquoted key") {
+  test("Parse unquoted key") {
     val handler = getErrorsFor(jsonDir / "unquoted-key.json")
 
     assert(handler.errors.lengthCompare(1) == 0)
@@ -24,35 +24,35 @@ trait ParseInvalidJsonTest extends FunSuite {
   }
 
   ignore("Parse unquoted value in seq") {
-    val handler = getErrorsFor(jsonDir / "unquoted-value-seq.json")
+    val handler = getErrorsFor(jsonDir / "unquoted-value-seq.json.ignore")
 
     assert(handler.errors.lengthCompare(1) == 0)
     assert(handler.errors.head.error.getMessage.equals("Error node 'invalid'"))
     assert(handler.errors.head.inputRange.equals(InputRange(3, 10, 3, 17)))
   }
 
-  ignore("Parse scalar in map entry in map") {
+  test("Parse scalar in map entry in map") {
     val handler = getErrorsFor(jsonDir / "scalar-in-map-entry.json")
 
     assert(handler.errors.lengthCompare(1) == 0)
-    assert(handler.errors.head.error.getMessage.equals("Error node '#an invalid json comment only to check the raw render'"))
+    assert(handler.errors.head.error.getMessage.equals("Syntax error in the following text: '#an invalid json comment only to check the raw render'"))
     assert(handler.errors.head.inputRange.equals(InputRange(5, 4, 5, 57)))
   }
 
-  ignore("Parse unclosed map") {
+  test("Parse unclosed map") {
     val handler = getErrorsFor(jsonDir / "unclosed-map.json")
 
     assert(handler.errors.lengthCompare(1) == 0)
     val error = handler.errors.head
-    assert(error.error.getMessage.startsWith("Error node ','"))
-    assert(handler.errors.head.inputRange.equals(InputRange(3, 56, 3, 57)))
+    assert(error.error.getMessage.startsWith("Syntax error : 'Missing closing map'"))
+    assert(handler.errors.head.inputRange.equals(InputRange(3, 57, 3, 57)))
 
   }
 
   private def getErrorsFor(jsonFile:SyncFile): TestErrorHandler = {
     val handler = TestErrorHandler()
 
-    JsonParser(jsonFile.read())(handler).parse()
+    val parts = JsonParser(jsonFile.read())(handler).parse()
     handler
   }
 

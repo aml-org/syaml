@@ -18,22 +18,29 @@ trait InvalidJsonTest extends GoldenSuite {
   private val files = if (file == null) yamlDir.list else Array(file)
 
   for (yaml <- files) {
-    test("Invalid for " + yaml) {
-      val yamlFile   = yamlDir / yaml
-      val yeast      = yaml.replaceExtension(if (yaml endsWith "yaml") "yt" else "jyt")
-      val yeastFile  = yeastDir / yeast
-      val goldenFile = goldenDir / yeast
+    if(yaml.endsWith(".ignore")){
+      ignore("Invalid for "+yaml){
+        succeed
+      }
+    }else{
 
-      generate(yamlFile, yeastFile)
+      test("Invalid for " + yaml) {
+        val yamlFile   = yamlDir / yaml
+        val yeast      = yaml.replaceExtension(if (yaml endsWith "yaml") "yt" else "jyt")
+        val yeastFile  = yeastDir / yeast
+        val goldenFile = goldenDir / yeast
 
-      doDeltas(yeastFile, goldenFile)
+        generate(yamlFile, yeastFile)
+
+        doDeltas(yeastFile, goldenFile)
+      }
     }
   }
 
   private def generate(yamlFile: SyncFile, yeastFile: SyncFile) = {
     val out   = new StringBuilder
     val lexer = JsonLexer(yamlFile.read())
-    while (lexer.token != YamlToken.EndStream) {
+    while (lexer.token != YamlToken.EndDocument) { // json files have only 1 document and ends with that token
       val data = YeastData(lexer.tokenData, lexer.tokenString)
       out.append(data).append('\n')
       lexer.advance()

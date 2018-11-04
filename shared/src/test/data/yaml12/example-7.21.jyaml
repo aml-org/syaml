@@ -15,11 +15,8 @@
   ],
   !!seq [
     !!map {
-      ? !!map {
-        ? !!str "JSON"
-        : !!str "like"
-      }
-      : !!str "adjacent"
+      ? !!str "JSON"
+      : !!str "like"
     }
   ]
 ]

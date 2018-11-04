@@ -21,6 +21,6 @@ case class TokenData[T <: Token](token: T, range: InputRange, start: Int = 0, en
   * A Token that contains the associated text.
   * So it can be used to into the AST to serialize the input without keeping the original source
   */
-case class AstToken(tokenType: Token, text: String) {
+case class AstToken(tokenType: Token, text: String, range: InputRange, parsingError :Boolean = false) {
     override def toString: String =  s"$tokenType '${text.encode}'"
 }
