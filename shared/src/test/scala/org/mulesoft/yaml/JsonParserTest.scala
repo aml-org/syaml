@@ -3,7 +3,7 @@ package org.mulesoft.yaml
 import org.mulesoft.common.io.{Fs, SyncFile}
 import org.mulesoft.lexer.InputRange
 import org.scalatest.FunSuite
-import org.yaml.model.{ParseErrorHandler, SyamlException, YPart}
+import org.yaml.model._
 import org.yaml.parser.JsonParser
 
 import scala.collection.mutable
@@ -52,6 +52,16 @@ trait JsonParserTest extends FunSuite {
   test("Parse map entries separeted with break line") {
     val handler = getErrorsFor(jsonDir / "diffline-map-entries.json")
     assert(handler.errors.lengthCompare(0) == 0)
+  }
+
+  test("Test map in map closing range") { // todo: move to another test
+    val jsonFile = jsonDir / "map-in-map.json"
+    val parts = JsonParser(jsonFile.read()).parse()
+    val restEntry = parts.collectFirst({case d:YDocument => d}).get.as[YMap].entries.head.value.as[YMap].entries.head
+    assert(restEntry.key.as[YScalar].text == "RestEntity")
+    val map = restEntry.value.as[YMap]
+    assert(map.range.lineTo == 7)
+    assert(map.range.columnTo == 5)
   }
 
   private def getErrorsFor(jsonFile:SyncFile): TestErrorHandler = {

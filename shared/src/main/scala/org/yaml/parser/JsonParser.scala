@@ -96,6 +96,11 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
       lexer.token match {
         case BeginScalar =>
           builder.parts += processMapEntry()
+          skipIgnorables(builder)
+          if(lexer.token == Indicator){
+            builder.append(lexer.tokenData)
+            lexer.advance()
+          }
         case WhiteSpace | LineBreak =>
           builder.append(lexer.tokenData)
           lexer.advance()
@@ -179,10 +184,8 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
     }
     skipIgnorables(entryBuilder)
     val value = processEntryMapValue()
-    skipIgnorables(entryBuilder)
     entryBuilder.parts += value
     val me = YMapEntry(entryBuilder.buildParts(lexer.tokenData))
-    if(lexer.token == Indicator)lexer.advance()
     me
   }
 
