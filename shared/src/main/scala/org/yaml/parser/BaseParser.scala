@@ -53,8 +53,10 @@ abstract class BaseParser private[parser] (val lexer: BaseLexer[YamlToken])(impl
         r
       }
     }
-    def buildParts(td: TD, text: String = ""): Array[YPart] = {
-      this append (td, text)
+    def buildParts(td: TD, text: String = "", custom:Boolean = false): Array[YPart] = {
+      if(custom)this appendCustom (td, text)
+      else this append (td, text)
+
       addNonContent(td)
       if (parts.isEmpty) Array.empty
       else {

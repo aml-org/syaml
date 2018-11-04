@@ -44,7 +44,7 @@ trait JsonParserTest extends FunSuite {
 
     assert(handler.errors.lengthCompare(1) == 0)
     val error = handler.errors.head
-    assert(error.error.getMessage.startsWith("Syntax error : 'Missing closing map'"))
+    assert(error.error.getMessage.startsWith("Syntax error : Missing closing map"))
     assert(handler.errors.head.inputRange.equals(InputRange(3, 57, 3, 57)))
 
   }
@@ -52,6 +52,20 @@ trait JsonParserTest extends FunSuite {
   test("Parse map entries separeted with break line") {
     val handler = getErrorsFor(jsonDir / "diffline-map-entries.json")
     assert(handler.errors.lengthCompare(0) == 0)
+  }
+
+  test("Parse map with only scalar") {
+    val handler = getErrorsFor(jsonDir / "map-with-scalar.json")
+    assert(handler.errors.lengthCompare(1) == 0)
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expected ':' found '}'"))
+
+  }
+
+  test("Parse entry without separator") {
+    val handler = getErrorsFor(jsonDir / "entry-without-indicator.json")
+    assert(handler.errors.lengthCompare(1) == 0)
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expected ':' found '\"MUA\",'"))
+
   }
 
   test("Test map in map closing range") { // todo: move to another test
@@ -64,6 +78,24 @@ trait JsonParserTest extends FunSuite {
     assert(map.range.columnTo == 5)
   }
 
+  test("Parse entry with number") {
+    val handler = getErrorsFor(jsonDir / "entry-with-number.json")
+    assert(handler.errors.lengthCompare(1) == 0)
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error in the following text: '{\n    \"start\" '"))
+  }
+
+  test("Parse unquoted key map") {
+    val handler = getErrorsFor(jsonDir / "unquoted-keymap.json")
+    assert(handler.errors.lengthCompare(12) == 0)
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error in the following text: ''otherApplication1''"))
+    assert(handler.errors(1).error.getMessage.startsWith("Syntax error in the following text: 'name'"))
+  }
+
+  test("Parse invalid number value") {
+    val handler = getErrorsFor(jsonDir / "invalid-number.json")
+    assert(handler.errors.lengthCompare(1) == 0)
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error in the following text: '0041533193'"))
+  }
   private def getErrorsFor(jsonFile:SyncFile): TestErrorHandler = {
     val handler = TestErrorHandler()
 

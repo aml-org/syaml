@@ -97,16 +97,25 @@ final class JsonLexer private (input: LexerInput, override val offsetPosition: (
   private def number(): Unit = {
     emit(BeginScalar)
     consume('-')
+    var valid = true
     if (!consume('0')) {
       consume()
       consumeWhile(isDigit)
+    }else if(isDigit(currentChar)){
+      valid = false
+      advanceToTokens(Set(',',']','}','"','[','{', ':'))
     }
-    if (consume('.')) consumeWhile(isDigit)
-    if (consume('e') || consume('E')) {
-      consume('+') || consume('-')
-      consumeWhile(isDigit)
+
+    if(valid){
+      if (consume('.')) {
+        consumeWhile(isDigit)
+      }
+      if (consume('e') || consume('E')) {
+        consume('+') || consume('-')
+        consumeWhile(isDigit)
+      }
+      emit(Text)
     }
-    emit(Text)
     emit(EndScalar)
   }
 

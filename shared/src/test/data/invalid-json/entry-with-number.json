@@ -1,0 +1,9 @@
+{
+  "weekDays":[ "Monday", "Friday"],
+  "start" : 120,
+  "end": 180,
+  "restTime"{
+    "start" : 120,
+    "end": 180
+  }
+}
