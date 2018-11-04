@@ -204,12 +204,16 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
         val textBuilder = new StringBuilder
         val builder = new Builder
         val first = lexer.tokenData
-        while(!Set(Indicator,EndMapping, EndDocument, BeginScalar).contains(lexer.token) ){
-          if(lexer.token !=Error)builder.append(lexer.tokenData)
-          textBuilder.append(lexer.tokenString)
-          lexer.advance()
+        if(lexer.token == EndMapping || entrySeparetor){
+          builder.appendCustom(TokenData(Error,first rangeTo lexer.tokenData), s"Expected value found '${lexer.tokenString}'")
+        }else{
+          while(!Set(Indicator,EndMapping, EndDocument, BeginScalar).contains(lexer.token) ){
+            if(lexer.token !=Error)builder.append(lexer.tokenData)
+            textBuilder.append(lexer.tokenString)
+            lexer.advance()
+          }
+          builder.append(TokenData(Error,first rangeTo lexer.tokenData), textBuilder.toString())
         }
-        builder.append(TokenData(Error,first rangeTo lexer.tokenData), textBuilder.toString())
         YNode(null,YType.Null.tag,None,builder.buildParts(lexer.tokenData), lexer.sourceName)
     }
   }

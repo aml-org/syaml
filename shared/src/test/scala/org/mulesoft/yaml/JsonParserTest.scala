@@ -96,6 +96,12 @@ trait JsonParserTest extends FunSuite {
     assert(handler.errors.lengthCompare(1) == 0)
     assert(handler.errors.head.error.getMessage.startsWith("Syntax error in the following text: '0041533193'"))
   }
+
+  test("Parse missing last mapentry value") {
+    val handler = getErrorsFor(jsonDir / "missing-last-mapentry-value.json")
+    assert(handler.errors.lengthCompare(1) == 0)
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expected value found '}'"))
+  }
   private def getErrorsFor(jsonFile:SyncFile): TestErrorHandler = {
     val handler = TestErrorHandler()
 

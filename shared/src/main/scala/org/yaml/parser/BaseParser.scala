@@ -38,7 +38,7 @@ abstract class BaseParser private[parser] (val lexer: BaseLexer[YamlToken])(impl
       if (first == null) first = td
     }
 
-    def appendCustom(td: TD, text: String = ""): Unit = {
+    def appendCustom(td: TD, text: String): Unit = {
       if (keepTokens) tokens += AstToken(td.token, text, td.range, true)
       if (first == null) first = td
     }
