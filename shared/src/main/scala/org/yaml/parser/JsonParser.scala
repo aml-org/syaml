@@ -105,7 +105,6 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
           builder.append(lexer.tokenData)
           lexer.advance()
         case Error =>
-//          builder.parts += YNonContent(lexer.tokenData.range, IndexedSeq(AstToken(lexer.token, lexer.tokenText.toString)), lexer.sourceName)
           recoverFromMapKey().foreach( builder.parts += _)
         case _ =>
           val textBuilder = new StringBuilder
