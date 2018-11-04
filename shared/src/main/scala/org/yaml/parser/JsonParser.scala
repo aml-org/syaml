@@ -76,7 +76,7 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
             textBuilder.append(lexer.tokenText)
             lexer.advance()
           }
-          builder.parts ++= errorBuilder.buildParts(TokenData(Error,lexer.tokenData.range ))
+          builder.parts ++= errorBuilder.buildParts(TokenData(Error,lexer.tokenData.range ), textBuilder.toString())
       }
     }
     val v = if(lexer.token == EndSequence) {
@@ -110,7 +110,7 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
             textBuilder.append(lexer.tokenText)
             lexer.advance()
           }
-          builder.parts ++= errorBuilder.buildParts(TokenData(Error,lexer.tokenData.range ))
+          builder.parts ++= errorBuilder.buildParts(TokenData(Error,lexer.tokenData.range ), textBuilder.toString())
       }
     }
     val v = if(lexer. token == EndMapping) {
@@ -175,10 +175,11 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
           textBuilder.append(lexer.tokenText)
           lexer.advance()
         }
-        entryBuilder.parts ++= errorBuilder.buildParts(TokenData(Error,lexer.tokenData.range ))
+        entryBuilder.parts ++= errorBuilder.buildParts(TokenData(Error,lexer.tokenData.range ), textBuilder.toString())
     }
     skipIgnorables(entryBuilder)
     val value = processEntryMapValue()
+    skipIgnorables(entryBuilder)
     entryBuilder.parts += value
     val me = YMapEntry(entryBuilder.buildParts(lexer.tokenData))
     if(lexer.token == Indicator)lexer.advance()

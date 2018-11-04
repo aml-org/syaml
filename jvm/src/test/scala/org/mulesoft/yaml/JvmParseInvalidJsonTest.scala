@@ -1,3 +1,3 @@
 package org.mulesoft.yaml
 
-class JvmParseInvalidJsonTest extends ParseInvalidJsonTest with JvmSuite
+class JvmJsonParserTest extends JsonParserTest with JvmSuite

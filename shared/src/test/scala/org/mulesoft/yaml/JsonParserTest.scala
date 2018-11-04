@@ -11,7 +11,7 @@ import scala.collection.mutable
 /**
   * Test handling errors
   */
-trait ParseInvalidJsonTest extends FunSuite {
+trait JsonParserTest extends FunSuite {
 
   private val jsonDir = Fs syncFile "shared/src/test/data/invalid-json"
 
@@ -47,6 +47,11 @@ trait ParseInvalidJsonTest extends FunSuite {
     assert(error.error.getMessage.startsWith("Syntax error : 'Missing closing map'"))
     assert(handler.errors.head.inputRange.equals(InputRange(3, 57, 3, 57)))
 
+  }
+
+  test("Parse map entries separeted with break line") {
+    val handler = getErrorsFor(jsonDir / "diffline-map-entries.json")
+    assert(handler.errors.lengthCompare(0) == 0)
   }
 
   private def getErrorsFor(jsonFile:SyncFile): TestErrorHandler = {
