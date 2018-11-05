@@ -73,7 +73,7 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
             textBuilder.append(lexer.tokenString)
             lexer.advance()
           }
-          builder.parts ++= errorBuilder.buildParts(TokenData(Error,lexer.tokenData.range ), textBuilder.toString())
+          builder.parts ++= errorBuilder.buildParts(TokenData(Error,first rangeTo lexer.tokenData ), textBuilder.toString())
       }
     }
     val v = if(lexer.token == EndSequence) {
@@ -159,7 +159,7 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
 
   private def endMapOrDoc = Set(EndMapping, EndDocument).contains(lexer.token)
   private def keyValueSeparator = lexer.token == Indicator && lexer.tokenString == ":"
-  private def entrySeparetor = lexer.token == Indicator && lexer.tokenString == ","
+  private def entrySeparator = lexer.token == Indicator && lexer.tokenString == ","
 
   private def processMapEntry():Option[YMapEntry] = {
     val entryBuilder = new Builder
@@ -170,7 +170,7 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
       val textBuilder = new StringBuilder
       val first = lexer.tokenData
       val errorBuilder  = new Builder
-      while((!endMapOrDoc) && !keyValueSeparator && !entrySeparetor){
+      while((!endMapOrDoc) && !keyValueSeparator && !entrySeparator){
         if(lexer.token != Error){
           append(entryBuilder)
         }
@@ -201,7 +201,7 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
         val textBuilder = new StringBuilder
         val builder = new Builder
         val first = lexer.tokenData
-        if(lexer.token == EndMapping || entrySeparetor){
+        if(lexer.token == EndMapping || entrySeparator){
           builder.appendCustom(TokenData(Error,first rangeTo lexer.tokenData), s"Expected value found '${lexer.tokenString}'")
         }else{
           while(!Set(Indicator,EndMapping, EndDocument, BeginScalar).contains(lexer.token) ){
