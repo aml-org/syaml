@@ -1,14 +1,14 @@
 package org.yaml.parser
 
 import org.mulesoft.common.core.Strings
-import org.mulesoft.lexer.{BaseLexer, InputRange, TokenData}
+import org.mulesoft.lexer.{AstToken, BaseLexer, InputRange, TokenData}
 import org.yaml.lexer.YamlToken._
 import org.yaml.lexer.{YamlLexer, YamlToken}
 import org.yaml.model
 import org.yaml.model.{YTag, _}
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 /**
   * A Yaml Parser that covers Steps Parse and Compose of the spec.
@@ -23,8 +23,6 @@ class YamlParser private[parser] (override val lexer: BaseLexer[YamlToken])(over
   private var inHandle                          = false
   private var inTag                             = false
   private var scalarMark                        = ""
-  private var current                           = new Builder
-  private var stack                             = List(current)
   private var prev: TD                          = TokenData(BeginStream, InputRange.Zero)
   private var lastBegin                         = BeginStream
   private var directiveArgs: ListBuffer[String] = _
@@ -53,7 +51,7 @@ class YamlParser private[parser] (override val lexer: BaseLexer[YamlToken])(over
     metaTextBuilder.clear()
     textBuilder.clear()
     lastBegin = td.token
-    current = new Builder
+    current = newBuilder
     stack = current :: stack
   }
 
@@ -229,6 +227,29 @@ class YamlParser private[parser] (override val lexer: BaseLexer[YamlToken])(over
     else if (tag.tagType == YType.Empty) tag.copy(tagType = defaultType)
     else tag
 
+
+  override type B = YamlBuilder
+  override protected def newBuilder: YamlBuilder = new YamlBuilder
+
+  protected class YamlBuilder extends Builder {
+
+    var anchor: Option[YAnchor] = None
+    var alias: String           = ""
+    var tag: YTag               = _
+
+
+    def buildParts(td: TD, text: String = ""): Array[YPart] = {
+      this append (td, text)
+
+      addNonContent(td)
+      if (parts.isEmpty) Array.empty
+      else {
+        val r = parts.toArray[YPart]
+        parts.clear()
+        r
+      }
+    }
+  }
 }
 
 object YamlParser {

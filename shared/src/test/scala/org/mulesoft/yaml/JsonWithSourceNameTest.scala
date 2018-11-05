@@ -24,7 +24,7 @@ trait JsonWithSourceNameTest extends WithSourceNameTest {
 
   private val rootSeq =
     """
-      |[ "map": {
+      |[ {
       |     "entry1": "a",
       |     "entry2": {
       |       "map": {
@@ -32,7 +32,8 @@ trait JsonWithSourceNameTest extends WithSourceNameTest {
       |         "entry4": ["a","b"]
       |       },
       |     "entry3":[ "a", "b" ]
-      |    },
+      |     }
+      |  },
       | "b" ]
     """.stripMargin
 

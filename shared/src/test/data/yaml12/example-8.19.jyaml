@@ -6,7 +6,6 @@
     : !!str "yellow"
   },
   !!map {
-    ? !!str "earth"
-    : !!str "blue"
+
   }
 ]

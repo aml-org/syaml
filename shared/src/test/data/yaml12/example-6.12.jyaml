@@ -1,8 +1,6 @@
 %YAML 1.2
 ---
 !!map {
-  ? !!str "first"
-  : !!str "Sammy",
   ? !!str "last"
   : !!str "Sosa"
 }

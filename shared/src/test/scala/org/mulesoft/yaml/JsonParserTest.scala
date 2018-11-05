@@ -19,15 +19,16 @@ trait JsonParserTest extends FunSuite {
     val handler = getErrorsFor(jsonDir / "unquoted-key.json")
 
     assert(handler.errors.lengthCompare(1) == 0)
+    assert(handler.errors.head.error.getMessage.equals("Syntax error : Expecting '\"' but 'abb' found"))
     assert(handler.errors.head.inputRange.equals(InputRange(3, 2, 3, 5)))
 
   }
 
-  ignore("Parse unquoted value in seq") {
-    val handler = getErrorsFor(jsonDir / "unquoted-value-seq.json.ignore")
+  test("Parse unquoted value in seq") {
+    val handler = getErrorsFor(jsonDir / "unquoted-value-seq.json")
 
     assert(handler.errors.lengthCompare(1) == 0)
-    assert(handler.errors.head.error.getMessage.equals("Error node 'invalid'"))
+    assert(handler.errors.head.error.getMessage.equals("Syntax error : Unexpected 'invalid'"))
     assert(handler.errors.head.inputRange.equals(InputRange(3, 10, 3, 17)))
   }
 
@@ -35,7 +36,7 @@ trait JsonParserTest extends FunSuite {
     val handler = getErrorsFor(jsonDir / "scalar-in-map-entry.json")
 
     assert(handler.errors.lengthCompare(1) == 0)
-    assert(handler.errors.head.error.getMessage.equals("Syntax error in the following text: '#an invalid json comment only to check the raw render'"))
+    assert(handler.errors.head.error.getMessage.equals("Syntax error : Expecting '\"' but '#an invalid json comment only to check the raw render' found"))
     assert(handler.errors.head.inputRange.equals(InputRange(5, 4, 5, 57)))
   }
 
@@ -44,7 +45,7 @@ trait JsonParserTest extends FunSuite {
 
     assert(handler.errors.lengthCompare(1) == 0)
     val error = handler.errors.head
-    assert(error.error.getMessage.startsWith("Syntax error : Missing closing map"))
+    assert(error.error.getMessage.startsWith("Syntax error : Missing '}'"))
     assert(handler.errors.head.inputRange.equals(InputRange(3, 57, 3, 57)))
 
   }
@@ -56,15 +57,15 @@ trait JsonParserTest extends FunSuite {
 
   test("Parse map with only scalar") {
     val handler = getErrorsFor(jsonDir / "map-with-scalar.json")
-    assert(handler.errors.lengthCompare(1) == 0)
-    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expected ':' found '}'"))
+    assert(handler.errors.lengthCompare(2) == 0)
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expecting ':' but '}' found"))
 
   }
 
   test("Parse entry without separator") {
     val handler = getErrorsFor(jsonDir / "entry-without-indicator.json")
     assert(handler.errors.lengthCompare(1) == 0)
-    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expected ':' found '\"MUA\",'"))
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Missing ':'"))
   }
 
   test("Test map in map closing range") { // todo: move to another test
@@ -79,16 +80,15 @@ trait JsonParserTest extends FunSuite {
 
   test("Parse entry with number") {
     val handler = getErrorsFor(jsonDir / "entry-with-number.json")
-    assert(handler.errors.lengthCompare(2) == 0)
-    assert(handler.errors.head.error.getMessage.startsWith("Syntax error in the following text: '{\n    \"start\" '"))
-    assert(handler.errors.last.error.getMessage.startsWith("Syntax error in the following text: '}'"))
+    assert(handler.errors.lengthCompare(1) == 0)
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expecting ':' but '{' found"))
   }
 
   test("Parse unquoted key map") {
     val handler = getErrorsFor(jsonDir / "unquoted-keymap.json")
     assert(handler.errors.lengthCompare(12) == 0)
-    assert(handler.errors.head.error.getMessage.startsWith("Syntax error in the following text: ''otherApplication1''"))
-    assert(handler.errors(1).error.getMessage.startsWith("Syntax error in the following text: 'name'"))
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expecting '\"' but 'name' found"))
+    assert(handler.errors(1).error.getMessage.startsWith("Syntax error : Unexpected ''otherApplication1''"))
   }
 
   test("Parse invalid number value") {
@@ -100,19 +100,19 @@ trait JsonParserTest extends FunSuite {
   test("Parse map with missing comma") {
     val handler = getErrorsFor(jsonDir / "map-without-comma.json")
     assert(handler.errors.lengthCompare(1) == 0)
-    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expected ',' or '}' but found '\"'"))
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Missing ','"))
   }
 
   test("Parse indicator after main seq close") {
     val handler = getErrorsFor(jsonDir / "bad-indicator-after-seq.json")
     assert(handler.errors.lengthCompare(1) == 0)
-    assert(handler.errors.head.error.getMessage.startsWith("Syntax error in the following text: ':'"))
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Unexpected ':'"))
   }
 
   test("Parse missing last mapentry value") {
     val handler = getErrorsFor(jsonDir / "missing-last-mapentry-value.json")
     assert(handler.errors.lengthCompare(1) == 0)
-    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expected value found '}'"))
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Unexpected '}'"))
   }
 
   // todo: generad valid jsons test

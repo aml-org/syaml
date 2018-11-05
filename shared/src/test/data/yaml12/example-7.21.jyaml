@@ -15,8 +15,7 @@
   ],
   !!seq [
     !!map {
-      ? !!str "JSON"
-      : !!str "like"
+
     }
   ]
 ]

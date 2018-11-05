@@ -1,290 +1,325 @@
 package org.yaml.parser
 
 import org.mulesoft.common.core.Strings
-import org.mulesoft.lexer.TokenData
-import org.yaml.lexer.JsonLexer
+import org.mulesoft.lexer.{AstToken, InputRange, TokenData}
 import org.yaml.lexer.YamlToken.{BeginDocument, _}
+import org.yaml.lexer.{JsonLexer, YamlToken}
 import org.yaml.model.{YTag, _}
 
 /**
   * A Json Parser
   */
-class JsonParser private[parser] (override val lexer: JsonLexer)(override implicit val eh: ParseErrorHandler) extends BaseParser(lexer) {
+class JsonParser private[parser] (override val lexer: JsonLexer)(override implicit val eh: ParseErrorHandler)
+    extends BaseParser(lexer) {
 
+  override type B = JsonBuilder
 
   /** Parse the Json and return an Indexed Seq of the Parts */
   def parse(keepTokens: Boolean = true): IndexedSeq[YPart] = { // i can only have one doc in json
     this.keepTokens = keepTokens
-    val current = new Builder
-    lexer.token match {
-      case BeginDocument => processDocument(current)
-      case _ =>
-        val textBuilder = new StringBuilder
-        val first = lexer.tokenData
-        while (lexer.token != EndDocument) {
-          textBuilder.append(lexer.tokenString)
-          if(lexer.token!=Error)append(current)
-          lexer.advance()
-        }
-        current.append(TokenData(Error, first rangeTo lexer.tokenData),textBuilder.toString())
-        buildParts(current)
-    }
-    IndexedSeq(YDocument(buildParts(current), lexer.sourceName))
+    IndexedSeq(parseDocument())
   }
 
-  private def processDocument(builder:Builder): Unit = {
-    if(lexer.token == BeginDocument){
-      append(builder)
-      lexer.advance()
+  private def parseDocument(): YDocument = {
+    if(consumeOrError(BeginDocument)){
+      process()
+      consumeOrError(EndDocument)
     }
-    skipIgnorables(builder)
-    process().foreach(builder.parts += _)
-    skipIgnorables(builder)
-    lexer.token match {
-      case EndDocument => // ignore
-      case _ =>
-        val first = lexer.tokenData
-        val stringBuilder = new StringBuilder
-        while(lexer.token!=EndDocument){
-          if(lexer.token!= Error) append(builder)
-          stringBuilder.append(lexer.tokenString)
-          append(builder)
-          lexer.advance()
-        }
-        builder.append(TokenData(Error, first rangeTo lexer.tokenData), stringBuilder.toString())
+    val d = YDocument(current.buildParts(), lexer.sourceName)
+    d
+  }
+
+  def unexpected(): Unit =
+    current.appendAndCheck(TokenData(Error, currentRange()), s"Unexpected '${currentText()}'")
+
+  def unexpected(expected: String): Unit = {
+    if (currentText().isEmpty)
+      current.appendAndCheck(TokenData(Error, currentRange()), s"Missing '$expected'")
+    else
+      current.appendAndCheck(TokenData(Error, currentRange()), s"Expecting '$expected' but '${currentText()}' found")
+  }
+
+  def unexpected(expected: YamlToken): Unit = {
+    defaultText(expected) match {
+      case Some(e)=>unexpected(e)
+      case _ => unexpected()
     }
   }
 
-  private def process(): Option[YNode] = {
-    val node: Option[YNode] = lexer.token match {
-      case BeginSequence => Some(processSeq())
-      case BeginMapping => Some(processMap())
-      case BeginScalar => Some(processScalar())
-      case _          => None
-    }
-    node
-  }
-
-  private def processSeq():YNode = {
-    val builder = new Builder
-    append(builder)
-    lexer.advance()
-    while(lexer.token != EndSequence && lexer.token!=EndDocument) {
-      lexer.token match {
-        case BeginScalar | BeginMapping | BeginSequence => process().foreach(builder.parts += _)
-        case WhiteSpace | LineBreak =>
-          append(builder)
-          lexer.advance()
-        case Error =>
-          append(builder)
-          lexer.advance()
-        case Indicator if lexer.tokenString == "," =>
-          append(builder)
-          lexer.advance()
-        case _ =>
-          val textBuilder = new StringBuilder
-          val first = lexer.tokenData
-          val errorBuilder  = new Builder
-          def continue = !(Set(EndSequence, EndDocument).contains(lexer.token) || (lexer.token == Indicator && lexer.tokenString == ","))
-          while(continue ){
-            if(lexer.token != Error) append(errorBuilder)
-            textBuilder.append(lexer.tokenString)
-            lexer.advance()
-          }
-          builder.parts ++= errorBuilder.buildParts(TokenData(Error,first rangeTo lexer.tokenData ), textBuilder.toString())
-      }
-    }
-    val v = if(lexer.token == EndSequence) {
-      val s = YSequence(buildParts(builder), lexer.sourceName)
-      lexer.advance()
-      s
-    }else
-      YSequence(builder.buildParts(TokenData(EndSequence,lexer.tokenData.range)), lexer.sourceName)
-    buildNode(v, YType.Seq.tag)
-  }
-
-  private def processMap() = {
-    val builder = new Builder
-    append(builder)
-    lexer.advance()
-    while(lexer.token != EndMapping && lexer.token !=EndDocument){
-      lexer.token match {
-        case BeginScalar =>
-          processMapEntry().foreach(builder.parts += _)
-          skipIgnorables(builder)
-          if(entrySeparator || endMapOrDoc){
-            if(entrySeparator){
-              append(builder)
-              lexer.advance()
-            }
-          }else{
-            if(lexer.token == BeginScalar)
-              builder.appendCustom(TokenData(Error, lexer.tokenData.range), s"""Expected ',' or '}' but found '"'""")
-            else{
-              builder.appendCustom(TokenData(Error, builder.tokens.last.range), s"Expected ',' or '}' but found '${builder.tokens.last.text}'")
-              lexer.advance()
-            }
-          }
-        case WhiteSpace | LineBreak =>
-          append(builder)
-          lexer.advance()
-        case Error =>
-          recoverFromMapKey().foreach( builder.parts += _)
-        case _ =>
-          val textBuilder = new StringBuilder
-          val errorBuilder  = new Builder
-          while(!Set(EndMapping, EndDocument,BeginScalar).contains(lexer.token) ){
-            if(lexer.token != Error) append(errorBuilder)
-            textBuilder.append(lexer.tokenString)
-            lexer.advance()
-          }
-          builder.parts ++= errorBuilder.buildParts(TokenData(Error,lexer.tokenData.range ), textBuilder.toString())
-      }
-    }
-    val v = if(lexer. token == EndMapping) {
-      val m = YMap(buildParts(builder), lexer.sourceName)
-      lexer.advance()
-      m
-    }else{
-      builder.appendCustom(TokenData(Error, lexer.tokenData.range), "Missing closing map")
-      YMap(builder.buildParts(TokenData(EndMapping,lexer.tokenData.range), "}"), lexer.sourceName)
-    }
-    buildNode(v, YType.Map.tag)
-  }
-
-  private def skipIgnorables(builder:Builder): Unit = {
-    while(lexer.token == WhiteSpace || lexer.token == LineBreak){
-      append(builder)
-      lexer.advance()
-    }
-  }
-  private def recoverFromMapKey(): Option[YMapEntry] = {
-    val entryBuilder = new Builder
-    append(entryBuilder)
-    lexer.advance()
-    while(lexer.token!=Indicator && lexer.token!= EndMapping && lexer.token!=EndDocument){
-      append(entryBuilder)
-      lexer.advance()
-    }
-    lexer.token match {
-      case Indicator if lexer.tokenString == "," =>
-        lexer.advance()
-        buildParts(entryBuilder)
-        None // not value or key can be parsed, ignore the entire entry
-      case Indicator if lexer.tokenString == ":" =>
-        entryBuilder.parts += YNode("")
-        append(entryBuilder)
-        lexer.advance()
-        skipIgnorables(entryBuilder)
-        entryBuilder.parts += processEntryMapValue()
-        val me = YMapEntry(buildParts(entryBuilder))
-        if(lexer.token == Indicator)lexer.advance()
-        Some(me)
+  private def defaultText(token:YamlToken): Option[String] = {
+    token match {
+      case BeginScalar => Some("\"")
+      case BeginMapping => Some("{")
+      case BeginSequence => Some("[")
+      case EndMapping => Some("}")
+      case EndSequence => Some("]")
       case _ => None
+
     }
   }
 
-  private def endMapOrDoc = Set(EndMapping, EndDocument).contains(lexer.token)
-  private def keyValueSeparator = lexer.token == Indicator && lexer.tokenString == ":"
-  private def entrySeparator = lexer.token == Indicator && lexer.tokenString == ","
-
-  private def processMapEntry():Option[YMapEntry] = {
-    val entryBuilder = new Builder
-    entryBuilder.parts += processScalar()
-    skipIgnorables(entryBuilder)
-
-    if(!keyValueSeparator){
-      val textBuilder = new StringBuilder
-      val first = lexer.tokenData
-      val errorBuilder  = new Builder
-      while((!endMapOrDoc) && !keyValueSeparator && !entrySeparator){
-        if(lexer.token != Error){
-          append(entryBuilder)
-        }
-        textBuilder.append(lexer.tokenString)
-        lexer.advance()
-      }
-      if(keyValueSeparator)
-        entryBuilder.parts ++= errorBuilder.buildParts(TokenData(Error,lexer.tokenData.range), textBuilder.toString())
-      else
-        entryBuilder.parts ++= errorBuilder.buildParts(TokenData(Error,lexer.tokenData.range ),
-          s"Expected ':' found '${textBuilder.toString()+lexer.tokenString}'", custom = true)
-    }
-
-    if(keyValueSeparator){
-      lexer.advance()
-      skipIgnorables(entryBuilder)
-
-      val value = processEntryMapValue()
-      entryBuilder.parts += value
-      Some(YMapEntry(buildParts(entryBuilder)))
-    }else None
-  }
-
-  private def processEntryMapValue():YNode = {
-    process() match {
-      case Some(node) => node
-      case _ =>
-        val textBuilder = new StringBuilder
-        val builder = new Builder
-        val first = lexer.tokenData
-        if(lexer.token == EndMapping || entrySeparator){
-          builder.appendCustom(TokenData(Error,first rangeTo lexer.tokenData), s"Expected value found '${lexer.tokenString}'")
-        }else{
-          while(!Set(Indicator,EndMapping, EndDocument, BeginScalar).contains(lexer.token) ){
-            if(lexer.token !=Error) append(builder)
-            textBuilder.append(lexer.tokenString)
-            lexer.advance()
-          }
-          builder.append(TokenData(Error,first rangeTo lexer.tokenData), textBuilder.toString())
-        }
-        YNode(null,YType.Null.tag,None, buildParts(builder), lexer.sourceName)
+  private def process(): Boolean = {
+    currentToken() match {
+      case BeginSequence => parseSeq()
+      case BeginMapping  => parseMap()
+      case BeginScalar   => parseScalar()
+      case _             =>
+        unexpected()
+        false
     }
   }
 
-  private def processScalar() = {
-    val scalarBuilder = new Builder
+  private def push(): Unit = {
+    current = newBuilder
+    stack = current :: stack
+  }
 
-    var scalarMark = ""
-    val textBuilder = new StringBuilder
-    while(lexer.token != EndScalar){
-      lexer.token match {
-        case BeginEscape =>
-          val metaTextBuilder = new StringBuilder
-          while(lexer.token!= EndEscape){
-            lexer.token match {
-              case Indicator => metaTextBuilder.append(lexer.tokenString)
-              case LineBreak =>
-                metaTextBuilder.clear()
-              case MetaText =>
-                metaTextBuilder.append(lexer.tokenString)
-              case _ =>
-            }
-            append(scalarBuilder)
-            lexer.advance()
-          }
-          //end escape
-          textBuilder.append(metaTextBuilder.mkString.decode(ignoreErrors = true))
-        case Indicator =>
-          scalarMark = lexer.tokenString
-        case Text =>
-          textBuilder.append(lexer.tokenText)
+  private def stackParts(part: YPart) = {
+    pop()
+    current.parts += part
+  }
+
+  private def pop(): Unit = {
+    stack = stack.tail
+    current = stack.head
+  }
+
+  private def parseMap():Boolean = {
+    push()
+    val r = parseList(BeginMapping, EndMapping, MapEntryParser())
+    val v = YMap(current.buildParts(), lexer.sourceName)
+    stackParts(buildNode(v, YType.Map.tag))
+    r
+  }
+
+  private def parseSeq():Boolean = {
+    push()
+    val r = parseList(BeginSequence, EndSequence, SequenceValueParser()) // should check if i parse something? empty pop if not?
+    val v = YSequence(current.buildParts(), lexer.sourceName)
+    stackParts(buildNode(v, YType.Seq.tag))
+    r
+  }
+
+  private def parseEscaped() = {
+    val metaTextBuilder = new StringBuilder
+    while (notCurrent(EndEscape)) {
+      currentToken() match {
+        case Indicator => metaTextBuilder.append(lexer.tokenString)
+        case LineBreak => metaTextBuilder.clear()
+        case MetaText => metaTextBuilder.append(lexer.tokenString)
         case _ =>
       }
-      append(scalarBuilder)
+      consume()
+    }
+    metaTextBuilder.mkString.decode(ignoreErrors = true)
+  }
+
+  private def parseScalar():Boolean = {
+    if(currentOrError(BeginScalar)){
+      push()
+      val textBuilder = new StringBuilder
+      var scalarMark = ""
+      while(notCurrent(EndScalar)){
+        currentToken() match {
+          case BeginEscape => textBuilder.append( parseEscaped())
+          case Indicator => scalarMark = currentText()
+          case Text => textBuilder.append(lexer.tokenText)
+          case _ =>
+        }
+        consume()
+      }
+      consumeOrError(EndScalar)
+      val tagType = if(scalarMark == DoubleQuoteMark.encodeChar.toString) YType.Str.tag else null
+      val b     = new YScalar.Builder(textBuilder.toString(),tagType , scalarMark, current.buildParts(), lexer.sourceName) // always enter with begin scalar
+      stackParts(buildNode(b.scalar, b.tag))
+      true
+    }else false
+  }
+
+  private def parseList(leftToken: YamlToken, rightToken: YamlToken,parser:ElementParser) = {
+    if (consumeOrError(leftToken)) {
+      while (notCurrent(rightToken)) {
+        parser.parse()
+        if (notCurrent(rightToken)) {
+          if(currentByTextOrError(Indicator, ","))consume()
+        }
+      }
+      consumeOrError(rightToken)
+      true
+    }else
+      false
+  }
+
+  trait ElementParser{
+    def parse(): Unit
+  }
+
+  case class SequenceValueParser() extends ElementParser{
+    override def parse(): Unit = {
+      val r = process()
+      if(!r) {
+        discardIf(Error)
+        advanceToByText((Indicator,Some(",")),(EndSequence,None))
+      }
+    }
+  }
+
+  case class MapEntryParser() extends ElementParser {
+
+    override def parse(): Unit = {
+      push() // i need new token for YMapEntry container
+      if (parseEntry()) stackParts(YMapEntry(current.buildParts()))
+      else {
+        current.buildParts()
+        pop()
+      }
+    }
+
+    private def parseKey() = {
+      val r = parseScalar()
+      if(!r) {
+        discardIf(Error)
+        advanceTo(Indicator, EndMapping)
+      }
+      r
+    }
+
+    private def parseEntry():Boolean = {
+      val k = parseKey()
+      if (k || currentByText(Indicator, ":")){
+        if(currentByTextOrError(Indicator, ":"))consume()
+        k & parseValue()
+      } else{
+        advanceToByText((Indicator,Some(",")), (EndMapping, None))
+        false
+      }
+    }
+
+    private def parseValue(): Boolean  = {
+      val r = process()
+      if(!r){
+        discardIf(Error)
+        advanceTo(Indicator, EndMapping)
+      }
+      r
+    }
+  }
+
+  private def currentToken(): YamlToken = {
+    while (lexer.token == WhiteSpace || lexer.token == LineBreak) {
+      current.append()
       lexer.advance()
     }
-    val parts = buildParts(scalarBuilder)
-    val b     = new YScalar.Builder(textBuilder.toString(), null, scalarMark, parts, lexer.sourceName) // always enter with begin scalar
-    lexer.advance() //advance end scalar
-    buildNode(b.scalar,b.tag)
+    lexer.token
   }
+
+  private def currentText(): String = lexer.tokenString
+
+  private def currentRange(): InputRange = lexer.tokenData.range
+
+  private def consume(): Unit = {
+    current.append()
+    lexer.advance()
+  }
+
+  private def discardIf(token: YamlToken): Unit = if(isCurrent(token)) discard()
+
+  private def discard(): Unit = lexer.advance()
+
+  private def advanceIf(token: YamlToken): Unit = if (isCurrent(token)) consume()
+
+  private def advanceTo(tokens:YamlToken*): Unit = {
+    while(!eof && !currentAnyOf(tokens: _*)){
+      consume()
+    }
+  }
+
+  private def advanceToByText(tokensText:(YamlToken, Option[String])*): Unit = {
+    def current(t:(YamlToken, Option[String])):Boolean = t._2 match {
+      case Some(text) => currentByTextOrError(t._1, text)
+      case _ => isCurrent(t._1)
+    }
+
+    while(!eof && !tokensText.exists(current)){
+      consume()
+    }
+  }
+
+  private def eof() = currentToken() == EndDocument
+
+  private def notCurrent(token: YamlToken) = currentToken() != token && !eof()
+
+  private def currentAnyOf(tokens:YamlToken*) = tokens.contains(currentToken())
+
+  private def isCurrent(token:YamlToken): Boolean = currentToken() == token
+
+  private def currentByText(token: YamlToken, text: String) = isCurrent(token) && currentText() == text
+
+  private def currentByTextOrError(token: YamlToken, text:String): Boolean = {
+    if (currentByText(token, text)) true
+    else{
+       unexpected(text)
+      false
+    }
+  }
+
+  private def currentOrError(token:YamlToken) = {
+    if (isCurrent(token)) true
+    else{
+      unexpected(token)
+      false
+    }
+  }
+
+  private def consumeOrError(token: YamlToken): Boolean = {
+    if (currentOrError(token)) {
+      consume()
+      true
+    } else false
+  }
+
 
   private def buildNode(value: YValue, tag: YTag) = YNode(value, tag, sourceName = lexer.sourceName)
 
-  private def buildParts(builder: Builder): Array[YPart] = builder.buildParts(lexer.tokenData, lexer.tokenString)
 
-  private def append(builder: Builder) = builder.append(lexer.tokenData, lexer.tokenString)
+  override protected def newBuilder: JsonBuilder = new JsonBuilder
+
+  class JsonBuilder extends Builder{
+    def append(): Unit = append(lexer.tokenData, lexer.tokenString)
+
+    def appendCustom(text: String): Unit = {
+      if (keepTokens) tokens += AstToken(lexer.token, text, lexer.tokenData.range, parsingError = true)
+      if (first == null) first = lexer.tokenData
+    }
+
+    def appendAndCheck(td: TD, text: String): Unit = {
+      this appendCustom (td, text)
+      addNonContent(td)
+    }
+
+    def addNonContent(): Unit =
+      if (tokens.nonEmpty) {
+        val content = YNonContent( rangeFromTo(first.range ,tokens.last.range) , buildTokens(), lexer.sourceName)
+        parts += content
+        collectErrors(content)
+      }
+
+    def buildParts(): Array[YPart] = {
+
+      addNonContent()
+      if (parts.isEmpty) Array.empty
+      else {
+        val r = parts.toArray[YPart]
+        parts.clear()
+        r
+      }
+    }
+
+    private def rangeFromTo(begin:InputRange, end:InputRange) =
+      InputRange(begin.lineFrom, begin.columnFrom, end.lineTo, end.columnTo)
+
+
+  }
 }
 
 object JsonParser {

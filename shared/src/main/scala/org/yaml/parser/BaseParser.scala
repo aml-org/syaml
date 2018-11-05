@@ -8,8 +8,10 @@ import scala.collection.mutable.ArrayBuffer
 
 abstract class BaseParser private[parser] (val lexer: BaseLexer[YamlToken])(implicit val eh: ParseErrorHandler) {
   type TD = TokenData[YamlToken]
-
+  type B
   protected var keepTokens                        = false
+  protected var current: B = newBuilder
+  protected var stack                             = List(current)
 
   def parse(keepTokens: Boolean = true): IndexedSeq[YPart]
 
@@ -24,13 +26,12 @@ abstract class BaseParser private[parser] (val lexer: BaseLexer[YamlToken])(impl
     docs
   }
 
-  protected class Builder {
+  protected def newBuilder: B
+  protected abstract class Builder {
+
     var first: TD               = _
     val tokens                  = new ArrayBuffer[AstToken]
     val parts                   = new ArrayBuffer[YPart]
-    var anchor: Option[YAnchor] = None
-    var alias: String           = ""
-    var tag: YTag               = _
     var value: YValue           = _
 
     def append(td: TD, text: String = ""): Unit = {
@@ -39,7 +40,7 @@ abstract class BaseParser private[parser] (val lexer: BaseLexer[YamlToken])(impl
     }
 
     def appendCustom(td: TD, text: String): Unit = {
-      if (keepTokens) tokens += AstToken(td.token, text, td.range, true)
+      if (keepTokens) tokens += AstToken(td.token, text, td.range, parsingError = true)
       if (first == null) first = td
     }
 
@@ -53,18 +54,7 @@ abstract class BaseParser private[parser] (val lexer: BaseLexer[YamlToken])(impl
         r
       }
     }
-    def buildParts(td: TD, text: String = "", custom:Boolean = false): Array[YPart] = {
-      if(custom)this appendCustom (td, text)
-      else this append (td, text)
 
-      addNonContent(td)
-      if (parts.isEmpty) Array.empty
-      else {
-        val r = parts.toArray[YPart]
-        parts.clear()
-        r
-      }
-    }
     def addNonContent(td: TD): Unit =
       if (tokens.nonEmpty) {
         val content = YNonContent(first rangeTo td, buildTokens(), lexer.sourceName)
