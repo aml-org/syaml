@@ -12,7 +12,6 @@ abstract class BaseLexer[T <: Token](var input: LexerInput) extends Lexer[T] {
   private var mark                     = position
   val sourceName: String               = input.sourceName
   private var _tokenData: TokenData[T] = _
-
   /** initialize the current _tokenData (may be invoking advance) */
   initialize()
 

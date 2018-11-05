@@ -94,9 +94,18 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
         case BeginScalar =>
           processMapEntry().foreach(builder.parts += _)
           skipIgnorables(builder)
-          if(lexer.token == Indicator){
-            append(builder)
-            lexer.advance()
+          if(entrySeparetor || endMapOrDoc){
+            if(entrySeparetor){
+              append(builder)
+              lexer.advance()
+            }
+          }else{
+            if(lexer.token == BeginScalar)
+              builder.appendCustom(TokenData(Error, lexer.tokenData.range), s"""Expected ',' or '}' but found '"'""")
+            else{
+              builder.appendCustom(TokenData(Error, builder.tokens.last.range), s"Expected ',' or '}' but found '${builder.tokens.last.text}'")
+              lexer.advance()
+            }
           }
         case WhiteSpace | LineBreak =>
           append(builder)

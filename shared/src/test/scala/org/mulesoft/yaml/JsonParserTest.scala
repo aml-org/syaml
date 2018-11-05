@@ -65,7 +65,6 @@ trait JsonParserTest extends FunSuite {
     val handler = getErrorsFor(jsonDir / "entry-without-indicator.json")
     assert(handler.errors.lengthCompare(1) == 0)
     assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expected ':' found '\"MUA\",'"))
-
   }
 
   test("Test map in map closing range") { // todo: move to another test
@@ -95,6 +94,12 @@ trait JsonParserTest extends FunSuite {
     val handler = getErrorsFor(jsonDir / "invalid-number.json")
     assert(handler.errors.lengthCompare(1) == 0)
     assert(handler.errors.head.error.getMessage.startsWith("Syntax error in the following text: '0041533193'"))
+  }
+
+  test("Parse map with missing comma") {
+    val handler = getErrorsFor(jsonDir / "map-without-comma.json")
+    assert(handler.errors.lengthCompare(1) == 0)
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expected ',' or '}' but found '\"'"))
   }
 
   test("Parse missing last mapentry value") {
