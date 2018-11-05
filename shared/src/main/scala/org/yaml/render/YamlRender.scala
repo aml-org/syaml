@@ -193,7 +193,7 @@ class YamlRender[W: Output](val writer: W, val expandReferences: Boolean) {
 
   private def renderParts(parts: YPart): Boolean = {
     val nodes     = parts.children
-    val hasTokens = nodes.exists(n => !n.isInstanceOf[YIgnorable]) && nodes.head.isInstanceOf[YNonContent]
+    val hasTokens = nodes.nonEmpty && nodes.head.isInstanceOf[YNonContent]
     if (hasTokens) doRenderParts(nodes)
     hasTokens
   }
