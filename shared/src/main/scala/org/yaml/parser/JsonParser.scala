@@ -16,13 +16,9 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
   def parse(keepTokens: Boolean = true): IndexedSeq[YPart] = { // i can only have one doc in json
     this.keepTokens = keepTokens
     val current = new Builder
+    skipIgnorables(current)
     lexer.token match {
-      case BeginDocument =>
-        while(lexer.token!=EndDocument){
-          append(current)
-          lexer.advance()
-          process().foreach(current.parts += _)
-        }
+      case BeginDocument => processDocument(current)
       case _ =>
         val textBuilder = new StringBuilder
         val first = lexer.tokenData
@@ -35,6 +31,28 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
         buildParts(current)
     }
     IndexedSeq(YDocument(buildParts(current), lexer.sourceName))
+  }
+
+  private def processDocument(builder:Builder): Unit = {
+    if(lexer.token == BeginDocument){
+      append(builder)
+      lexer.advance()
+    }
+    process().foreach(builder.parts += _)
+    skipIgnorables(builder)
+    lexer.token match {
+      case EndDocument => // ignore
+      case _ =>
+        val first = lexer.tokenData
+        val stringBuilder = new StringBuilder
+        while(lexer.token!=EndDocument){
+          if(lexer.token!= Error) append(builder)
+          stringBuilder.append(lexer.tokenString)
+          append(builder)
+          lexer.advance()
+        }
+        builder.append(TokenData(Error, first rangeTo lexer.tokenData), stringBuilder.toString())
+    }
   }
 
   private def process(): Option[YNode] = {

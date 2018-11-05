@@ -79,8 +79,9 @@ trait JsonParserTest extends FunSuite {
 
   test("Parse entry with number") {
     val handler = getErrorsFor(jsonDir / "entry-with-number.json")
-    assert(handler.errors.lengthCompare(1) == 0)
+    assert(handler.errors.lengthCompare(2) == 0)
     assert(handler.errors.head.error.getMessage.startsWith("Syntax error in the following text: '{\n    \"start\" '"))
+    assert(handler.errors.last.error.getMessage.startsWith("Syntax error in the following text: '}'"))
   }
 
   test("Parse unquoted key map") {
@@ -100,6 +101,12 @@ trait JsonParserTest extends FunSuite {
     val handler = getErrorsFor(jsonDir / "map-without-comma.json")
     assert(handler.errors.lengthCompare(1) == 0)
     assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expected ',' or '}' but found '\"'"))
+  }
+
+  test("Parse indicator after main seq close") {
+    val handler = getErrorsFor(jsonDir / "bad-indicator-after-seq.json")
+    assert(handler.errors.lengthCompare(1) == 0)
+    assert(handler.errors.head.error.getMessage.startsWith("Syntax error in the following text: ':'"))
   }
 
   test("Parse missing last mapentry value") {
