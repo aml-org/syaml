@@ -114,6 +114,12 @@ trait JsonParserTest extends FunSuite {
     assert(handler.errors.lengthCompare(1) == 0)
     assert(handler.errors.head.error.getMessage.startsWith("Syntax error : Expected value found '}'"))
   }
+
+  // todo: generad valid jsons test
+  test("Check text with spaces at begin") {
+    val handler = getErrorsFor(jsonDir / "space-at-begin.json")
+    assert(handler.errors.lengthCompare(0) == 0)
+  }
   private def getErrorsFor(jsonFile:SyncFile): TestErrorHandler = {
     val handler = TestErrorHandler()
 
