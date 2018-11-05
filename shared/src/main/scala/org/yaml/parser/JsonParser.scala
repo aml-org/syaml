@@ -112,8 +112,8 @@ class JsonParser private[parser] (override val lexer: JsonLexer)(override implic
         case BeginScalar =>
           processMapEntry().foreach(builder.parts += _)
           skipIgnorables(builder)
-          if(entrySeparetor || endMapOrDoc){
-            if(entrySeparetor){
+          if(entrySeparator || endMapOrDoc){
+            if(entrySeparator){
               append(builder)
               lexer.advance()
             }
