@@ -1342,11 +1342,59 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
     * )+
     * <p> For some fixed auto-detected m greater than 0
     */
-  def blockMapping(n: Int): Boolean = beginOfLine && {
-    val m = detectMapStart(n)
-    (m > 0) && emit(BeginMapping) && oneOrMore {
-      indent(n + m) && blockMapEntry(n + m)
-    } && emit(EndMapping)
+  def blockMapping(n: Int): Boolean = beginOfLine && matches {
+    emit(BeginMapping) && oneOrMoreEntries(n) && emit(EndMapping)
+  }
+
+  private def currentSpaces:Int =  input.countSpaces(0, MAX_VALUE)
+  /**
+    * Build entries from a parent indentation. Check for not valid entries and add those lines as errors
+    * Try to add all entries between errors until the indentation returns to his parent level.
+    * if a line is indented less or more than the first valid map entry, it will be considered error
+    *
+    * returns true if at least one entry was emitted
+    * */
+  def oneOrMoreEntries(parent:Int):Boolean = {
+
+    zeroOrMore(!lineIsMapEntry() && invalidEntry(parent))
+    var oneEntry = false
+    var entryIndentation:Int = -1
+    while(isIndented(parent) && notDocument(parent)){
+      val start = detectMapStart(parent)
+      if(entryIndentation == -1) entryIndentation = start
+      if(oneOrMore(entryInParent(entryIndentation,start, parent))) oneEntry = true
+      zeroOrMore(invalidEntry(parent))
+    }
+    oneEntry
+  }
+
+  private def lineIsMapEntry(): Boolean = {
+    val next = lookAhead(currentSpaces)
+    // do exists a way to know that a node matched against some valid root or value in a map??
+    next == '?' || next == '{' || next == '[' || next == '|' || lineContainsMapIndicator()
+  }
+
+  private def isIndented(parent:Int) :Boolean= {
+    currentChar != EofChar && (
+      (parent < 0 && currentSpaces >= 0) ||
+        (parent >= 0 && currentSpaces > parent))
+  }
+
+  private def entryInParent(indentation:Int, start:Int, parent:Int):Boolean =
+    indentation == start && start > 0 && indent(parent + start) && blockMapEntry(parent + start)
+
+  private def invalidEntry(parent:Int): Boolean = isIndented(parent) &&  errorMapLine(currentSpaces, parent)
+
+  private def notDocument(parent:Int): Boolean = !(parent < 0 && anyValidDirective)
+
+  private def anyValidDirective:Boolean = isDocumentEnd || currentChar == BomMark || isDirectivesEnd || isDirective
+
+  def errorMapLine(spaces:Int, parent:Int): Boolean = {
+    notDocument(parent) && consumeAndEmit(spaces, WhiteSpace) && {
+      while (!isBreakComment(currentChar)) consume()
+      emit(Error)
+      breakComment()
+    }
   }
 
   /**
@@ -1534,7 +1582,9 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
     *
     * [209]	l-directive-document	::=	l-directive+ l-explicit-document
     */
-  private def directiveDocument() = currentChar == '%' && oneOrMore(directive()) && explicitDocument()
+  private def directiveDocument() = isDirective && oneOrMore(directive()) && explicitDocument()
+
+  private def isDirective:Boolean = currentChar == '%'
 
   /** [210]	l-any-document	::=	  l-directive-document | l-explicit-document | l-bare-document */
   private def anyDocument() = nonEof && matches {
