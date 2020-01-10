@@ -483,20 +483,28 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
   /**
     * [105]	e-scalar	::=	/* Empty */
     */
-  def emptyScalar(): Boolean = {
+  def emptyScalar(n :Int): Boolean = {
     emit(BeginScalar)
+    matches(lineBreakSequence()>0 && breakNonContent() && currentSpaces > n && indent(currentSpaces) && breakComment())
     emit(EndScalar)
   }
 
   /**
     * [106] e-node :: e-scalar
     */
-  private def emptyNode() = {
+  private def emptyNode(n:Int) = {
     emit(BeginNode)
-    emptyScalar()
+    emptyScalar(n)
     emit(EndNode)
   }
 
+  private def emptyValue(n:Int) = {
+    emit(BeginNode)
+    emit(BeginScalar)
+    matches(lineBreakSequence()>0 && breakNonContent() && currentSpaces > n && indent(currentSpaces) && breakComment()) || matches(separateInLine())
+    emit(EndScalar)
+    emit(EndNode)
+  }
   /**
     * Process either simple or double quoted scalars
     */
@@ -822,7 +830,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
     * |   ( [[emptyNode e-node]] [[emptyNode e-node]])
     */
   private def flowMapExplicitEntry(n: Int, c: YamlContext) = {
-    (currentChar == ',' || currentChar == '}') && emptyNode() && emptyNode() || flowMapImplicitEntry(n, c)
+    (currentChar == ',' || currentChar == '}') && emptyNode(n) && emptyNode(n) || flowMapImplicitEntry(n, c)
   }
 
   /**
@@ -846,7 +854,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
       b1 && emit(EndNode) && (
           matches {
             optional(separate(n, c)) && flowMapSeparateValue(n, c)
-          } || emptyNode()
+          } || emptyNode(n)
       )
     } || flowMapEmptyKeyEntry(n, c) || flowMapJsonKeyEntry(n, c)
 
@@ -855,7 +863,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
     * [[flowMapSeparateValue c-ns-flow-map-separate-value(n,c)]]
     */
   private def flowMapEmptyKeyEntry(n: Int, c: YamlContext) = matches {
-    emptyNode() && flowMapSeparateValue(n, c)
+    emptyNode(n) && flowMapSeparateValue(n, c)
   }
 
   /**
@@ -871,7 +879,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
       flowNode(n, c) &&
       emit(EndNode)
     } ||
-      emptyNode())
+      emptyNode(n))
 
   /**
     * [148]	c-ns-flow-map-json-key-entry(n,c)	::=	[[flowJsonNode c-flow-json-node(n,c)]]
@@ -885,7 +893,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
     flowJsonNode(n, c) && (matches {
       separate(n, c)
       flowMapAdjacentValue(n, c)
-    } || emptyNode())
+    } || emptyNode(n))
   }
 
   /**
@@ -899,7 +907,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
         separate(n, c)
         emit(BeginNode)
         flowNode(n, c) && emit(EndNode)
-      } || emptyNode()
+      } || emptyNode(n)
   )
 
   /**
@@ -983,7 +991,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
   def flowYamlNode(n: Int, c: YamlContext): Boolean =
     aliasNode() ||
       flowYamlContent(n, c) ||
-      nodeProperties(n, c) && (matches(separate(n, c) && flowYamlContent(n, c)) || emptyScalar())
+      nodeProperties(n, c) && (matches(separate(n, c) && flowYamlContent(n, c)) || emptyScalar(n))
 
   /**
     * [160]	c-flow-json-node(n,c)	::=	( c-ns-properties(n,c) s-separate(n,c) )? c-flow-json-content(n,c)
@@ -1009,7 +1017,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
     aliasNode() ||
     matches(flowContent(n, c)) ||
     nodeProperties(n, c) &&
-    (matches(separate(n, c) && flowContent(n, c)) || emptyScalar())
+    (matches(separate(n, c) && flowContent(n, c)) || emptyScalar(n))
   }
 
   /**
@@ -1319,7 +1327,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
       }
     } || {
       blockNode(n, ctx) ||
-      matches(emptyNode() && multilineComment())
+      matches(emptyNode(n) && multilineComment())
     }
   }
 
@@ -1427,7 +1435,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
   @failfast def mapExplicitEntry(n: Int): Boolean = {
     val b = indicator('?')
     b && blockIndented(n, BlockOut) && matches {
-      mapExplicitValue(n) || emptyNode()
+      mapExplicitValue(n) || emptyNode(n)
     }
   }
 
@@ -1455,7 +1463,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
     * </blockquote></pre>
     */
   def mapImplicitEntry(n: Int): Boolean = matches {
-    (matches(implicitJsonKey(BlockKey)) || matches(implicitYamlKey(BlockKey)) || emptyNode()) &&
+    (matches(implicitJsonKey(BlockKey)) || matches(implicitYamlKey(BlockKey)) || emptyNode(n)) &&
     mapImplicitValue(n)
   }
 
@@ -1467,7 +1475,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
     */
   def mapImplicitValue(n: Int): Boolean = indicator(':') && {
     blockNode(n, BlockOut) ||
-    emptyNode() && (matches(multilineComment()) || matches(error() && multilineComment()))
+    emptyNode(n) && (matches(multilineComment()) || matches(error() && multilineComment()))
   }
 
   /**
@@ -1574,7 +1582,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
     */
   private def explicitDocument() = isDirectivesEnd && matches {
     consumeAndEmit(3, DirectivesEnd)
-    matches(bareDocument()) || matches(emptyNode() && multilineComment())
+    matches(bareDocument()) || matches(emptyNode(0) && multilineComment())
   }
 
   /**
