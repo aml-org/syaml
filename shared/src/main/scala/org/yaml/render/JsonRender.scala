@@ -11,9 +11,7 @@ import org.yaml.model._
 /**
   * Json Render
   */
-class JsonRender[W: Output] private (private val writer: W,
-                                     initialIndentation: Int = 0,
-                                     options: JsonRenderOptions = JsonRenderOptions()) {
+class JsonRender[W: Output] private (private val writer: W, initialIndentation:Int = 0) {
   override def toString: String = writer.toString
 
   private var indentation    = initialIndentation
@@ -34,9 +32,9 @@ class JsonRender[W: Output] private (private val writer: W,
 
   private def render(yPart: YPart): JsonRender[W] = {
     yPart match {
-      case node: YNode      => render(node)
-      case entry: YMapEntry => renderEntry(entry)
-      case other            => render(other.toString)
+      case node: YNode => render(node)
+      case entry:YMapEntry => renderEntry(entry)
+      case other => render(other.toString)
     }
   }
 
@@ -73,7 +71,7 @@ class JsonRender[W: Output] private (private val writer: W,
       renderIndent().render("}")
     }
 
-  private def renderEntry(entry: YMapEntry) = {
+  private def renderEntry(entry:YMapEntry) = {
     render(entry.key).render(": ").render(entry.value)
   }
 
@@ -86,7 +84,7 @@ class JsonRender[W: Output] private (private val writer: W,
       case Null => "null"
       case _ =>
         scalar.value match {
-          case s: String => '"' + options.encoder.encode(s) + '"'
+          case s: String => '"' + s.encode + '"'
           case _         => '"' + scalar.text + '"'
         }
     })
@@ -100,36 +98,29 @@ class JsonRender[W: Output] private (private val writer: W,
 object JsonRender {
 
   /** Render a Seq of Parts to an Output */
-  def render[W: Output](doc: YDocument,
-                        writer: W,
-                        indentation: Int = 0,
-                        options: JsonRenderOptions = JsonRenderOptions()): Unit = {
+  def render[W: Output](doc: YDocument, writer: W, indentation :Int = 0): Unit = {
     try {
-      val builder = new JsonRender(writer, indentation, options)
+      val builder = new JsonRender(writer, indentation)
       builder.render(doc.node).render("\n")
     } finally {
       writer.flush
     }
   }
 
-  def render(doc: YDocument, indentation: Int, options: JsonRenderOptions): String = {
+  /** Render a Seq of Parts as a String */
+  def render(doc: YDocument, indentation:Int): String = {
     val s = new StringWriter()
-    render(doc, s, indentation, options)
+    render(doc, s, indentation)
     s.toString
   }
-
-  /** Render a Seq of Parts as a String */
-  def render(doc: YDocument, indentation: Int): String = render(doc, indentation, JsonRenderOptions())
 
   def render(doc: YDocument): String = render(doc, 0)
 
-  def render(part: YPart, indentation: Int, options: JsonRenderOptions): String = {
-    val s       = new StringWriter()
-    val builder = new JsonRender(s, indentation, options)
+  def render(part: YPart, indentation:Int): String = {
+    val s = new StringWriter()
+    val builder = new JsonRender(s, indentation)
     builder.render(part)
     s.toString
   }
-
-  def render(part: YPart, indentation: Int): String = render(part, indentation, JsonRenderOptions())
 
 }
