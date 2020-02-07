@@ -1371,7 +1371,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
       val start = detectMapStart(parent)
       if(entryIndentation == -1) entryIndentation = start
       if(oneOrMore(entryInParent(entryIndentation,start, parent))) oneEntry = true
-      zeroOrMore(invalidEntry(parent))
+      else matches(invalidEntry(parent))
     }
     oneEntry
   }
@@ -1391,7 +1391,7 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
   private def entryInParent(indentation:Int, start:Int, parent:Int):Boolean =
     indentation == start && start > 0 && indent(parent + start) && blockMapEntry(parent + start)
 
-  private def invalidEntry(parent:Int): Boolean = isIndented(parent) &&  errorMapLine(currentSpaces, parent)
+  private def invalidEntry(parent:Int): Boolean = isIndented(parent)  &&  errorMapLine(currentSpaces, parent)
 
   private def notDocument(parent:Int): Boolean = !(parent < 0 && anyValidDirective)
 

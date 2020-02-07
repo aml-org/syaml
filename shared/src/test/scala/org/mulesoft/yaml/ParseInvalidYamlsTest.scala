@@ -86,6 +86,25 @@ trait ParseInvalidYamlsTest extends FunSuite {
     assert(handler.errors.last.error.getMessage.equals("Syntax error in the following text: 'brother'"))
   }
 
+  test("Valid map with unclosed key in middle and recover") {
+    val handler = TestErrorHandler()
+
+    val text =
+      """key:
+        |   otherLevel:
+        |     valid1: value
+        |     invalid
+        |     valid2: value
+        |   brother: value
+        |
+        |""".stripMargin
+    val docs = YamlParser(text)(handler).documents()
+    assert(docs.length == 1)
+    val map = docs.head.node.as[YMap]
+    val secondMap = map.entries.head.value.as[YMap]
+    assert(secondMap.entries.length == 2)
+  }
+
   case class TestErrorHandler() extends ParseErrorHandler {
     val errors = new mutable.ListBuffer[ErrorContainer]()
 
