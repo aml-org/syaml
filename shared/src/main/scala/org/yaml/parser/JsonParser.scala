@@ -14,6 +14,9 @@ import scala.collection.mutable.ArrayBuffer
 class JsonParser private[parser] (val lexer: JsonLexer)(implicit val eh: ParseErrorHandler) extends YParser {
 
   type TD = TokenData[YamlToken]
+
+  lexer.initialize()
+
   private var keepTokens = false
   private var current    = new JsonBuilder
   private var stack      = List(current)

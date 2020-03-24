@@ -30,7 +30,7 @@ trait YamlToYeastTest extends GoldenSuite {
   }
 
   private def generate(yamlFile: SyncFile, yeastFile: SyncFile) = {
-    val lexer = YamlLexer(yamlFile.read())
+    val lexer = YamlLexer(yamlFile.read()).initialize()
     val out = new StringBuilder
     while (lexer.token != YamlToken.EndStream) {
       val data = YeastData(lexer.tokenData, lexer.tokenString)

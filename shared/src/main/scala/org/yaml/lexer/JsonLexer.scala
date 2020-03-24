@@ -12,9 +12,10 @@ final class JsonLexer private (input: LexerInput, positionOffset: Position = Pos
     extends BaseLexer[YamlToken](input, positionOffset) {
 
   /** Init must initialize the stack and the current _tokenData (may be invoking advance) */
-  override protected def initialize(): Unit = {
+  override def initialize(): JsonLexer = {
     emit(BeginDocument)
     advance()
+    this
   }
 
   /**

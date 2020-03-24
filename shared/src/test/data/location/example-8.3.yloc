@@ -1,5 +1,9 @@
-YDocument    [1,0..3,0]      example-8.3.yaml
-YNodePlain   [1,0..3,0]      example-8.3.yaml
-YSequence    [1,0..3,0]      example-8.3.yaml
+YDocument    [1,0..9,0]      example-8.3.yaml
+YNodePlain   [1,0..9,0]      example-8.3.yaml
+YSequence    [1,0..9,0]      example-8.3.yaml
 YNodePlain   [1,1..3,0]      example-8.3.yaml
 YScalar      [1,2..2,0]      example-8.3.yaml
+YNodePlain   [4,1..6,0]      example-8.3.yaml
+YScalar      [4,2..6,0]      example-8.3.yaml
+YNodePlain   [7,1..8,0]      example-8.3.yaml
+YScalar      [7,2..8,0]      example-8.3.yaml

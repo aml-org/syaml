@@ -10,7 +10,7 @@ object BasicTest  {
   val yaml = "    #aaaaa\n # hhh\n"
 
   def main(args: Array[String]): Unit = {
-      val lexer = YamlLexer(yaml)
+      val lexer = YamlLexer(yaml).initialize()
       while (lexer.token != YamlToken.EndStream) {
           println(YeastData(lexer.tokenData, lexer.tokenString))
           lexer.advance()

@@ -12,16 +12,13 @@ abstract class BaseLexer[T <: Token](var input: LexerInput, val positionOffset: 
   val sourceName: String               = input.sourceName
   private var _tokenData: TokenData[T] = _
 
-  /** initialize the current _tokenData (may be invoking advance) */
-  initialize()
-
   private def position = input.position + positionOffset
 
   /** Check if there are emitted tokens */
   def nonTokenEmitted: Boolean = tokenQueue.isEmpty
 
   /** Init must initialize the current _tokenData (may be invoking advance) */
-  protected def initialize()
+  def initialize(): BaseLexer[T]
 
   /** get the current token in the input stream.  */
   override def token: T = _tokenData.token

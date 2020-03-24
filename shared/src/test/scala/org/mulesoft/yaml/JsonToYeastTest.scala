@@ -33,7 +33,7 @@ trait JsonToYeastTest extends GoldenSuite {
 
   private def generate(yamlFile: SyncFile, yeastFile: SyncFile) = {
     val out   = new StringBuilder
-    val lexer = JsonLexer(yamlFile.read())
+    val lexer = JsonLexer(yamlFile.read()).initialize()
     while (lexer.token != YamlToken.EndDocument) {
       val data = YeastData(lexer.tokenData, lexer.tokenString)
       out.append(data).append('\n')

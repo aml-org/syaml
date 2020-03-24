@@ -32,7 +32,7 @@ trait InvalidYamlTest extends GoldenSuite {
 
   private def generate(yamlFile: SyncFile, yeastFile: SyncFile) = {
     val out   = new StringBuilder
-    val lexer = YamlLexer(yamlFile.read())
+    val lexer = YamlLexer(yamlFile.read()).initialize()
     while (lexer.token != YamlToken.EndStream) {
       val data = YeastData(lexer.tokenData, lexer.tokenString)
       out.append(data).append('\n')

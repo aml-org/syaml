@@ -1,6 +1,6 @@
 package org.yaml.parser
 
-import org.mulesoft.lexer.{Position, SourceLocation}
+import org.mulesoft.lexer._
 import org.yaml.lexer.YamlLexer
 import org.yaml.model._
 
@@ -23,7 +23,14 @@ class YamlParser private[parser] (val lexer: YamlLexer)(implicit val eh: ParseEr
   }
 
   /** Parse the Yaml and return an Indexed Seq of the Parts */
-  def parse(keepTokens: Boolean = true): IndexedSeq[YPart] = new YamlLoader(lexer, keepTokens, includeTag, eh).parse()
+  def parse(keepTokens: Boolean = true): IndexedSeq[YPart] = parse(keepTokens, StreamLexerContext)
+
+  private def parse(keepTokens:  Boolean, ctx:LexerContext):IndexedSeq[YPart] =
+    new YamlLoader(lexer.initialize(ctx), keepTokens, includeTag, eh).parse()
+
+  override def document(): YDocument = {
+    new YDocument(SourceLocation(lexer.sourceName), parse(keepTokens = false, SingleDocumentLexerContext))
+  }
 
   /** Define an Include Tag if not empty it will generate Mutable Node References for tagged nodes */
   def withIncludeTag(s: String): this.type = {
