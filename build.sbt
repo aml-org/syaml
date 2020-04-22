@@ -8,8 +8,8 @@ val settings = Common.settings ++ Common.publish ++ Seq(
   organization := "org.mule.syaml",
   name := "syaml",
   version := {
-    val major = 0
-    val minor = 7
+    val major = 1
+    val minor = 0
 
     lazy val build  = sys.env.getOrElse("BUILD_NUMBER", "0")
     lazy val branch = sys.env.get("BRANCH_NAME")
