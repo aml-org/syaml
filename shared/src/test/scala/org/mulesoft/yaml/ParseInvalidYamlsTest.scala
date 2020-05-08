@@ -21,9 +21,13 @@ trait ParseInvalidYamlsTest extends FunSuite {
 
     YamlParser(yamlFile.read())(handler).parse()
 
-    assert(handler.errors.lengthCompare(1) == 0)
-    assert(handler.errors.head.error.getMessage.equals("Duplicate key : 'first'"))
-    assert(handler.errors.head.inputRange.equals(InputRange(3, 0, 3, 5)))
+    assert(handler.errors.lengthCompare(2) == 0)
+    val normal = handler.errors.head
+    assert(normal.error.getMessage.equals("Duplicate key : 'normal'"))
+    assert(normal.inputRange.equals(InputRange(2, 0, 2, 6)))
+    val quotation = handler.errors(1)
+    assert(quotation.error.getMessage.equals("Duplicate key : 'withQuotation'"))
+    assert(quotation.inputRange.equals(InputRange(4, 0, 4, 15)))
   }
 
   test("Parse invalid entry value as scalar and map") {

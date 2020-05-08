@@ -79,8 +79,12 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
     val keys = mutable.Set[String]()
     for (part <- parts) part match {
       case entry: YMapEntry =>
-        val key = entry.key.toString
-        if (!keys.add(key)) eh.handle(entry.key.location, DuplicateKeyException(key))
+        entry.key.value match {
+          case s: YScalar =>
+            val key = s.text
+            if (!keys.add(key)) eh.handle(entry.key.location, DuplicateKeyException(key))
+          case _ =>
+        }
       case _ =>
     }
   }
