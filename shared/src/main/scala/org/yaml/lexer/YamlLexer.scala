@@ -1297,15 +1297,29 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
     val m: Int = detectSequenceStart(n)
     m > 0 &&
     emit(BeginSequence) &&
-    matches(seqMember(m+n)) &&
-    zeroOrMore {
-        matches(seqMember(n+m)) ||
-          (!(n == -1 && input.countSpaces()==0) && indent( n + m) && errorLine())
+    oneOrMore {
+        matches(seqMember(n + m)) || matches(errorUntilSeq(n,m)) || matches(errorsUntilBack(n,m))
     } &&
     emit(EndSequence)
   }
 
-  def seqMember(idn:Int): Boolean = indent(idn) && blockSeqEntry(idn)
+  // advance with error until sequence char: errorsUntilSeq
+  // if not - is detected, advance until the indentation is the same that the father (n+1?) and go out. Father map recovery
+  private def errorUntilSeq(n:Int, m:Int) = oneOrMoreErrorSeqEntries(n,m,() => !looksLikeSeq(n,m)) && looksLikeSeq(n,m) && emitError()
+
+  private def errorsUntilBack(n:Int, m:Int) = oneOrMoreErrorSeqEntries(n,m, () => seqIndentedFromFather(n)) && emitError() || !nonEof
+
+  private def seqIndentedFromFather(n:Int): Boolean = input.countSpaces() > n + 1
+
+  private def oneOrMoreErrorSeqEntries(n:Int,m:Int, whileFN:() => Boolean): Boolean = oneOrMore(whileFN() && checkSeqIndent(n,m)  && seqEntryError(n))
+
+  private def seqEntryError(n:Int) = nonEof && consumeErrorLine()
+
+  private def looksLikeSeq(n:Int, m:Int) = detectSequenceStart(n) == m
+
+  private def checkSeqIndent(n:Int, m:Int) = !(n == -1 && input.countSpaces()==0) && indent(n+m)
+
+  private def seqMember(idn:Int): Boolean = indent(idn) && blockSeqEntry(idn)
 
   private def detectSequenceStart(n: Int) = {
     val spaces = input.countSpaces(0, MAX_VALUE)
@@ -1385,7 +1399,9 @@ final class YamlLexer private (input: LexerInput, positionOffset: Position = Pos
 
   private def entryErrors(n:Int) = oneOrMore( !validEntryContent(n)  && entryError(n))
 
-  private def validEntryContent(n:Int) = looksLikeEntry(n) || ( !isSingleDocument && isRootException(n))
+  private def validEntryContent(n:Int) = looksLikeEntry(n) || singleDocRootException(n)
+
+  private def singleDocRootException(n:Int):Boolean = !isSingleDocument && isRootException(n)
 
   private def looksLikeEntry(n:Int) = matches(indent(n) && someEntryIndicator())
 

@@ -1,0 +1,18 @@
+%YAML 1.2
+---
+!!map {
+  ? !!str "key"
+  : !!map {
+    ? !!str "displayName"
+    : !!str "b",
+    ? !!str "type"
+    : !!seq [
+      !!str "array"
+    ],
+    ? !!str "items"
+    : !!map {
+      ? !!str "type"
+      : !!str "A"
+    }
+  }
+}

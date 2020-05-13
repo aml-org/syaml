@@ -1,0 +1,6 @@
+key:
+  displayName: b
+  type:
+  - array
+  items:
+    type: A
