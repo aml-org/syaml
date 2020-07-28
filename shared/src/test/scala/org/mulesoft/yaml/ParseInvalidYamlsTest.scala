@@ -14,6 +14,12 @@ import scala.collection.mutable
 trait ParseInvalidYamlsTest extends FunSuite {
 
   private val yamlDir = Fs syncFile "shared/src/test/data/parser/invalid"
+  test("No error when ending with \\r"){
+    val handler = TestErrorHandler()
+    val text = "standardHeaders:\n  headers: value\n\r"
+    YamlParser(text)(handler).document()
+    assert(handler.errors.lengthCompare(0) == 0)
+  }
 
   test("Parse duplicate key") {
     val yamlFile = yamlDir / "duplicate-key.yaml"

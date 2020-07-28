@@ -68,7 +68,7 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
       case Indicator   => current.processIndicator()
       case EndEscape   => current.endEscape()
       case LineBreak   => current.processLineBreak()
-      case WhiteSpace  => current.processWhitSpace()
+      case WhiteSpace  => current.processWhiteSpace()
       case Error       => eh.handle(lexer.tokenData.range, LexerException(lexer.tokenString))
       case _           =>
     }
@@ -102,7 +102,7 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
     var alias: String           = ""
     var tag: YTag               = _
 
-    def processWhitSpace() {}
+    def processWhiteSpace() {}
     def appendText(txt: CharSequence): Unit = {}
     def appendMetaText(): Unit              = metaTextBuilder.append(lexer.tokenText)
     def processLineBreak(): Unit            = if (escaping) current.metaTextBuilder.clear()
@@ -206,7 +206,7 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
   private class DirectiveBuilder extends YamlBuilder {
     private val args = ListBuffer.empty[String]
 
-    override def processWhitSpace(): Unit = addArg()
+    override def processWhiteSpace(): Unit = addArg()
 
     private def addArg(): Unit = if (metaTextBuilder.nonEmpty) {
       args += metaTextBuilder.result()

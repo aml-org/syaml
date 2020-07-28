@@ -90,7 +90,7 @@ class CharSequenceLexerInput private (val data: CharSequence,
     if (off < 0) return 0
     while (off < endOffset) {
       val c = data.charAt(off)
-      if (c != ' ' && c != '\t') return i
+      if (c != ' ' && c != '\t' && c != '\r') return i
       i = i + 1
       off += 1
     }
