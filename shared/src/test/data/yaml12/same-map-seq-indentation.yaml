@@ -1,0 +1,15 @@
+%YAML 1.2
+---
+!!map {
+  ? !!str "requirements"
+  : !!map {
+    ? !!str "isolations"
+    : !!seq [
+      !!str "value 1"
+    ],
+    ? !!str "accessEquipment"
+    : !!seq [
+      !!str "Value 1"
+    ]
+  }
+}

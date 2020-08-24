@@ -1,0 +1,7 @@
+requirements: #This will be concatenated in long text
+  isolations:
+    - #item 1
+      value 1
+  accessEquipment:
+    - #item 1
+      Value 1

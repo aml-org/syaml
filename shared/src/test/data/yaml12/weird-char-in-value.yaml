@@ -1,0 +1,10 @@
+%YAML 1.2
+---
+!!map {
+  ? !!str "title"
+  : !!null "",
+  ? !!str "baseUri"
+  : !!str "https://ec2-52-201-242-128.compute-1.amazonaws.com/mocks/1201bcdf-f1a0-4eb3-a002-4f6f817d44cc/api",
+  ? !!str "version"
+  : !!int "1"
+}
