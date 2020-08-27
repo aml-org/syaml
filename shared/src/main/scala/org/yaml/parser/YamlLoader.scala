@@ -13,7 +13,7 @@ import scala.reflect.ClassTag
 private[parser] class YamlLoader(val lexer: YamlLexer,
                                  val keepTokens: Boolean,
                                  val includeTag: String,
-                                 implicit val eh: ParseErrorHandler) {
+                                 implicit val eh: ParseErrorHandler) extends DuplicateDetection {
 
   private val aliases              = mutable.Map.empty[String, YNode]
   private def current: YamlBuilder = stack.top()
@@ -73,20 +73,6 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
       case _           =>
     }
     current.addCurrentToken()
-  }
-
-  private def duplicates(parts: Array[YPart]): Unit = {
-    val keys = mutable.Set[String]()
-    for (part <- parts) part match {
-      case entry: YMapEntry =>
-        entry.key.value match {
-          case s: YScalar =>
-            val key = s.text
-            if (!keys.add(key)) eh.handle(entry.key.location, DuplicateKeyException(key))
-          case _ =>
-        }
-      case _ =>
-    }
   }
 
   private class YamlBuilder(val first: SourceLocation = lexer.tokenData.range) {

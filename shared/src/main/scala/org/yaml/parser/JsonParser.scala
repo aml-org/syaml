@@ -11,7 +11,10 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * A Json Parser
   */
-class JsonParser private[parser] (val lexer: JsonLexer)(implicit val eh: ParseErrorHandler) extends YParser {
+class JsonParser private[parser] (val lexer: JsonLexer, val shouldDetectDuplicates: Boolean)(
+    implicit val eh: ParseErrorHandler)
+    extends YParser
+    with DuplicateDetection {
 
   type TD = TokenData[YamlToken]
 
@@ -96,7 +99,8 @@ class JsonParser private[parser] (val lexer: JsonLexer)(implicit val eh: ParseEr
     if (r) consume()
 
     val parts = current.buildParts()
-    val v     = YMap(sl, parts)
+    if (shouldDetectDuplicates) duplicates(parts)
+    val v = YMap(sl, parts)
     stackParts(buildNode(v, YType.Map.tag))
     r
   }
@@ -359,15 +363,15 @@ class JsonParser private[parser] (val lexer: JsonLexer)(implicit val eh: ParseEr
 }
 
 object JsonParser {
-  def apply(s: CharSequence)(implicit eh: ParseErrorHandler = ParseErrorHandler.parseErrorHandler): JsonParser =
-    new JsonParser(JsonLexer(s))(eh)
+  def apply(s: CharSequence, shouldDetectDuplicates: Boolean = false)(implicit eh: ParseErrorHandler = ParseErrorHandler.parseErrorHandler): JsonParser =
+    new JsonParser(JsonLexer(s), shouldDetectDuplicates)(eh)
 
-  def obj(s: CharSequence)(implicit eh: ParseErrorHandler = ParseErrorHandler.parseErrorHandler): YObj =
-    apply(s)(eh).document().obj
+  def obj(s: CharSequence, shouldDetectDuplicates: Boolean = false)(implicit eh: ParseErrorHandler = ParseErrorHandler.parseErrorHandler): YObj =
+    apply(s, shouldDetectDuplicates)(eh).document().obj
 
-  def withSource(s: CharSequence, sourceName: String, positionOffset: Position = Position.Zero)(
+  def withSource(s: CharSequence, sourceName: String, positionOffset: Position = Position.Zero, shouldDetectDuplicates: Boolean = false)(
       implicit eh: ParseErrorHandler = ParseErrorHandler.parseErrorHandler): JsonParser =
-    new JsonParser(JsonLexer(s, sourceName, positionOffset))(eh)
+    new JsonParser(JsonLexer(s, sourceName, positionOffset), shouldDetectDuplicates)(eh)
 
   @deprecated("Use Position argument", "")
   def withSourceOffset(s: CharSequence, sourceName: String, offset: (Int, Int))(

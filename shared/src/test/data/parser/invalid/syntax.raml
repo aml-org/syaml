@@ -1,0 +1,34 @@
+#%RAML 1.0
+baseUri: https://0.0.0.0:443/ig/data/portal/client/1.3
+title: IG-Data-Portal Client
+version: 1.3
+
+traits:
+  standardHeaders:
+    headers:  
+      X-Correlation-ID: 
+        description: correlationID provided by client application
+        type: string
+        required: false
+
+securitySchemes:
+  basic:
+    type: Basic Authentication  
+    describedBy: 
+      headers: 
+        Authorization:
+          type: string
+
+/clients/registration:
+  get:
+    securedBy: basic
+    is: ["standardHeaders"]
+    queryParameters:
+      IDENTITY_NUMBER:
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              { "Client": {  "RegistrationMatches": [ { "CLIENT_BPID": "1463916", "CLIENT_TYPE": "2", "DECEASED_INDICATOR": "N", "UNLOCATED_INDICATOR": "N", "MATCH_TYPE": "INSURANCE", "ACTIVE_INVESTMENT": "Y", "ACTIVE_INSURANCE": "N", "ACTIVE_MORTGAGE": "N" },  { "CLIENT_BPID": "1463917", "CLIENT_TYPE": "3", "DECEASED_INDICATOR": "", "UNLOCATED_INDICATOR": "Y", "MATCH_TYPE": "INVESTMENT", "ACTIVE_INVESTMENT": "N", "ACTIVE_INSURANCE": "Y", "ACTIVE_MORTGAGE": "Y" } ]  } }
+
