@@ -11,7 +11,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * A Json Parser
   */
-class JsonParser private[parser] (val lexer: JsonLexer, val shouldDetectDuplicates: Boolean)(
+class JsonParser private[parser] (val lexer: JsonLexer)(
     implicit val eh: ParseErrorHandler)
     extends YParser
     with DuplicateDetection {
@@ -99,7 +99,7 @@ class JsonParser private[parser] (val lexer: JsonLexer, val shouldDetectDuplicat
     if (r) consume()
 
     val parts = current.buildParts()
-    if (shouldDetectDuplicates) duplicates(parts)
+    duplicates(parts)
     val v = YMap(sl, parts)
     stackParts(buildNode(v, YType.Map.tag))
     r
@@ -363,18 +363,18 @@ class JsonParser private[parser] (val lexer: JsonLexer, val shouldDetectDuplicat
 }
 
 object JsonParser {
-  def apply(s: CharSequence, shouldDetectDuplicates: Boolean = false)(implicit eh: ParseErrorHandler = ParseErrorHandler.parseErrorHandler): JsonParser =
-    new JsonParser(JsonLexer(s), shouldDetectDuplicates)(eh)
+  def apply(s: CharSequence)(implicit eh: ParseErrorHandler = DefaultJsonErrorHandler()): JsonParser =
+    new JsonParser(JsonLexer(s))(eh)
 
-  def obj(s: CharSequence, shouldDetectDuplicates: Boolean = false)(implicit eh: ParseErrorHandler = ParseErrorHandler.parseErrorHandler): YObj =
-    apply(s, shouldDetectDuplicates)(eh).document().obj
+  def obj(s: CharSequence)(implicit eh: ParseErrorHandler = DefaultJsonErrorHandler()): YObj =
+    apply(s)(eh).document().obj
 
-  def withSource(s: CharSequence, sourceName: String, positionOffset: Position = Position.Zero, shouldDetectDuplicates: Boolean = false)(
-      implicit eh: ParseErrorHandler = ParseErrorHandler.parseErrorHandler): JsonParser =
-    new JsonParser(JsonLexer(s, sourceName, positionOffset), shouldDetectDuplicates)(eh)
+  def withSource(s: CharSequence, sourceName: String, positionOffset: Position = Position.Zero)(
+      implicit eh: ParseErrorHandler = DefaultJsonErrorHandler()): JsonParser =
+    new JsonParser(JsonLexer(s, sourceName, positionOffset))(eh)
 
   @deprecated("Use Position argument", "")
   def withSourceOffset(s: CharSequence, sourceName: String, offset: (Int, Int))(
-      implicit eh: ParseErrorHandler = ParseErrorHandler.parseErrorHandler): JsonParser =
+      implicit eh: ParseErrorHandler = DefaultJsonErrorHandler()): JsonParser =
     withSource(s, sourceName, Position(offset._1, offset._2))
 }
