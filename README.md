@@ -12,7 +12,7 @@ Parser uses lexer YEAST tokens to generate a hierarchical model (structure match
 
 # Features
 
-- Complete YAML 1.2 processor
+- Complete YAML 1.2 processor.
 - Able to parse all examples from the [specification](http://www.yaml.org/spec/1.2/spec.html)
 
 ## On development
