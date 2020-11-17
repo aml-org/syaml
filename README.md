@@ -1,21 +1,21 @@
 # SYaml
 
-This project provides a Pure Scala YAML processor that has no dependencies on external libraries.
-
-SYaml is a YAML 1.2 syntax parser written in Scala.
-
+The SYaml project provides a Pure Scala YAML 1.2 syntax processor that has no dependencies on external libraries.
 
 # About
 
-The lexer converts YAML files to YEAST tokens using Haskell's [YamlReference: YAML reference implementation](https://hackage.haskell.org/package/YamlReference)).
+This project includes the following: 
 
-The parser uses the lexer YEAST token output to generate a hierarchical model.
-The structure of the model matches the structure created by the [YAML Reference Parser](http://ben-kiki.org/ypaste/)).
+- The lexer converts YAML files to YEAST tokens using Haskell's [YamlReference: YAML reference implementation](https://hackage.haskell.org/package/YamlReference).
+
+- The parser uses the lexer YEAST token output to generate a hierarchical model.
+
+  The structure of the model matches the structure created by the [YAML Reference Parser](http://ben-kiki.org/ypaste/).
 
 # Features
 
 - Complete YAML 1.2 processor
-- Able to parse all examples from the [YAML specification](http://www.yaml.org/spec/1.2/spec.html).
+- Able to parse all examples from the [YAML specification](http://www.yaml.org/spec/1.2/spec.html)
 
 ## In development
 
