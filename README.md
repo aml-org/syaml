@@ -6,16 +6,20 @@ The SYaml project provides a Pure Scala YAML 1.2 syntax processor that has no de
 
 This project includes the following: 
 
-- The lexer converts YAML files to YEAST tokens using Haskell's [YamlReference: YAML reference implementation](https://hackage.haskell.org/package/YamlReference).
+- Lexer
 
-- The parser uses the lexer YEAST token output to generate a hierarchical model.
+  Converts YAML files to YEAST tokens using Haskell's [YamlReference: YAML reference implementation](https://hackage.haskell.org/package/YamlReference)
+
+- Parser
+
+  Uses the lexer YEAST token output to generate a hierarchical model.
 
   The structure of the model matches the structure created by the [YAML Reference Parser](http://ben-kiki.org/ypaste/).
 
 # Features
 
 - Complete YAML 1.2 processor
-- Able to parse all examples from the [YAML specification](http://www.yaml.org/spec/1.2/spec.html)
+- Ability to parse all examples from the [YAML specification](http://www.yaml.org/spec/1.2/spec.html)
 
 ## In development
 
