@@ -1,33 +1,35 @@
 # SYaml
 
-A YAML 1.2 syntax parser written in Scala.
+This project provides a Pure Scala YAML processor that has no dependencies on external libraries.
 
-This project aims to provide a pure-scala yaml processor with no dependencies to external libraries.
+SYaml is a YAML 1.2 syntax parser written in Scala.
+
 
 # About
 
-Lexer converts YAML files to YEAST tokens (based on Haskell's [YamlReference reference implementation](https://hackage.haskell.org/package/YamlReference)).
+The lexer converts YAML files to YEAST tokens using Haskell's [YamlReference: YAML reference implementation](https://hackage.haskell.org/package/YamlReference)).
 
-Parser uses lexer YEAST tokens to generate a hierarchical model (structure matches [YAML Reference Parser](http://ben-kiki.org/ypaste/))
+The parser uses the lexer YEAST token output to generate a hierarchical model.
+The structure of the model matches the structure created by the [YAML Reference Parser](http://ben-kiki.org/ypaste/)).
 
 # Features
 
 - Complete YAML 1.2 processor
-- Able to parse all examples from the [specification](http://www.yaml.org/spec/1.2/spec.html)
+- Able to parse all examples from the [YAML specification](http://www.yaml.org/spec/1.2/spec.html).
 
-## On development
+## In development
 
 - Java API and libraries
-- JS API and libraries
-- Improve errors
-- Documentation
+- JavaScript API and libraries
+- Improve error messages
+- Improve documentation
 - Model golden tests
 
 # Usage
 
-## Lexer (Yeast tokens output)
+## Lexer (YEAST Token Output)
 
-Example on how to iterate through YEAST tokens.
+The following example shows how to iterate through YEAST tokens:
 
 ```scala
 private def generate(yamlFile: File, yeastFile: File) = {
@@ -42,9 +44,9 @@ private def generate(yamlFile: File, yeastFile: File) = {
 }
 ```
 
-## Parser (Model output)
+## Parser (Model Output)
 
-Example on how to parse a file
+The following example shows how to parse a file:
 
 ```scala
 private def generate(yamlFile: File) = {
