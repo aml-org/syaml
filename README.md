@@ -8,7 +8,9 @@ This project includes the following:
 
 - Lexer
 
-  Converts YAML files to YEAST tokens using Haskell's [YamlReference: YAML reference implementation](https://hackage.haskell.org/package/YamlReference)
+  Converts YAML files to YEAST tokens. 
+  
+  The lexer and the YEAST tokens are based on Haskell's [YamlReference: YAML reference implementation](https://hackage.haskell.org/package/YamlReference).
 
 - Parser
 
