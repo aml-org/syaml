@@ -1,7 +1,7 @@
 package org.mulesoft.yaml
 
 import org.mulesoft.common.core._
-import org.mulesoft.common.ext.Diff
+import org.mulesoft.common.test.Diff
 import org.scalatest.{Assertion, FunSuite, Matchers}
 import org.yaml.model._
 import org.yaml.render.YamlRender

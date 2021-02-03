@@ -1,6 +1,6 @@
 package org.mulesoft.yaml
 
-import org.mulesoft.common.ext.Diff
+import org.mulesoft.common.test.Diff
 import org.mulesoft.common.io.SyncFile
 import org.mulesoft.test.GoldenSuite
 import org.yaml.model.YPart
