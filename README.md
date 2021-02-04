@@ -59,6 +59,6 @@ private def generate(yamlFile: File) = {
   val elements = YamlParser(yamlFile).parse()
   for (e <- elements) {
     println(e)
-  }
+  }aaaa
 }
 ```
