@@ -23,7 +23,7 @@ lazy val workspaceDirectory: File =
     case _       => Path.userHome / "mulesoft"
   }
 
-val scalaCommonVersion = "0.5.71"
+val scalaCommonVersion = "1.0.77"
 
 lazy val scalaCommonJVMRef = ProjectRef(workspaceDirectory / "scala-common", "commonJVM")
 lazy val scalaCommonJSRef  = ProjectRef(workspaceDirectory / "scala-common", "commonJS")
