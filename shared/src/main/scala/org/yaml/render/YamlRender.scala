@@ -1,7 +1,5 @@
 package org.yaml.render
 
-import java.io.StringWriter
-
 import org.mulesoft.common.core.Strings
 import org.mulesoft.common.io.Output
 import org.mulesoft.common.io.Output._
@@ -9,16 +7,18 @@ import org.mulesoft.lexer.AstToken
 import org.yaml.lexer.YamlToken
 import org.yaml.model.{YDocument, _}
 
+import java.io.StringWriter
+
 /**
   * Yaml Render
   */
-class YamlRender[W: Output](val writer: W, val expandReferences: Boolean, initialIndentation:Int = 0, options: YamlRenderOptions = YamlRenderOptions()) {
-  private val buffer = new StringBuilder
+class YamlRender[W: Output](val writer: W, val expandReferences: Boolean, initialIndentation:Int = 0, protected val options: YamlRenderOptions = YamlRenderOptions()) {
+  protected val buffer = new StringBuilder
 
-  private var indentation    = initialIndentation - options.indentationSize
-  private def indent(): Unit = indentation += options.indentationSize
-  private def dedent(): Unit = indentation -= options.indentationSize
-  private def renderIndent(): this.type = {
+  protected var indentation: Int = initialIndentation - options.indentationSize
+  protected def indent(): Unit = indentation += options.indentationSize
+  protected def dedent(): Unit = indentation -= options.indentationSize
+  protected def renderIndent(): this.type = {
     print(" " * indentation)
     this
   }
@@ -34,7 +34,7 @@ class YamlRender[W: Output](val writer: W, val expandReferences: Boolean, initia
     writer.append(buffer.toString)
     buffer.clear()
   }
-  private def print(value: String) = {
+  protected def print(value: String): this.type = {
     buffer.append(value)
     this
   }
@@ -48,7 +48,7 @@ class YamlRender[W: Output](val writer: W, val expandReferences: Boolean, initia
       this
     }
 
-  private def render(part: YPart, yType: Option[YType] = None): this.type = {
+  protected def render(part: YPart, yType: Option[YType] = None): this.type = {
     checkEndDocument(part)
     part match {
       case c: YComment     => renderComment(c.metaText, c.tokens)
@@ -106,8 +106,9 @@ class YamlRender[W: Output](val writer: W, val expandReferences: Boolean, initia
     endDocument = true
   }
 
-  private def renderMap(map: YMap): Unit = if (!renderParts(map)) {
+  protected def renderMap(map: YMap): Unit = if (!renderParts(map)) {
     if (map.isEmpty) print("{}")
+    else if (map.isInFlow && !options.applyFormatting) renderAsFlow(map)
     else {
       indent()
       for (e <- map.entries) println().renderIndent().renderMapEntry(e)
@@ -115,7 +116,7 @@ class YamlRender[W: Output](val writer: W, val expandReferences: Boolean, initia
     }
   }
 
-  private def renderMapEntry(e: YMapEntry): Unit = {
+  protected def renderMapEntry(e: YMapEntry): Unit = {
     // The key
     val key = e.key
     key.value match {
@@ -185,8 +186,9 @@ class YamlRender[W: Output](val writer: W, val expandReferences: Boolean, initia
       print(str.toString)
     }
 
-  private def renderSeq(seq: YSequence): Unit = if (!renderParts(seq)) {
+  protected def renderSeq(seq: YSequence): Unit = if (!renderParts(seq)) {
     if (seq.isEmpty) print("[]")
+    else if (seq.isInFlow && !options.applyFormatting) renderAsFlow(seq)
     else {
       indent()
       for (e <- seq.children) {
@@ -218,6 +220,16 @@ class YamlRender[W: Output](val writer: W, val expandReferences: Boolean, initia
   }
   private def doRenderParts(children: IndexedSeq[YPart], yType: Option[YType] = None): Unit = children foreach {
     render(_, yType)
+  }
+
+  private def renderAsFlow(ypart: YPart): Unit = {
+    indent()
+    buildFlowRenderer().render(ypart)
+    dedent()
+  }
+
+  private def buildFlowRenderer(): YamlFlowRender[W] = {
+    new YamlFlowRender[W](writer, expandReferences, indentation, options, buffer)
   }
 }
 

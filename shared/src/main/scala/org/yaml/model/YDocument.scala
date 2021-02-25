@@ -75,7 +75,7 @@ object YDocument {
                        YMapEntry(key, value)
                      }
                      .toArray[YPart],
-                   sourceName, inFlow = false))
+                   sourceName))
       }
   }
 

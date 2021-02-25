@@ -38,11 +38,12 @@ class YMap private (location: SourceLocation, parts: IndexedSeq[YPart], inFlow: 
 }
 
 object YMap {
-  def apply(location: SourceLocation, c: IndexedSeq[YPart], inFlow: Boolean = false): YMap = new YMap(location, c, inFlow)
+  def apply(location: SourceLocation, c: IndexedSeq[YPart], inFlow: Boolean): YMap = new YMap(location, c, inFlow)
+  def apply(location: SourceLocation, c: IndexedSeq[YPart]): YMap = YMap(location, c, inFlow = false)
+  def apply(c: IndexedSeq[YPart], sourceName: String): YMap       = YMap(SourceLocation(sourceName), c)
   def apply(c: IndexedSeq[YPart], sourceName: String, inFlow: Boolean): YMap       = YMap(SourceLocation(sourceName), c, inFlow)
-  val empty: YMap = YMap(IndexedSeq.empty, "", inFlow = false)
+  val empty: YMap = YMap(IndexedSeq.empty, "")
 }
-
 class YMapEntry private (val key: YNode, val value: YNode, location: SourceLocation, parts: IndexedSeq[YPart])
     extends YPart(location, parts) {
   override def toString: String = key + ": " + value

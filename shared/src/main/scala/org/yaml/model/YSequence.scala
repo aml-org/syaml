@@ -32,10 +32,9 @@ object YSequence {
   val empty = new YSequence(Unknown, IndexedSeq.empty, false)
 
   def apply(parts: IndexedSeq[YPart]): YSequence                      = YSequence(Unknown, parts)
-  def apply(parts: IndexedSeq[YPart], inFlow: Boolean): YSequence     = new YSequence(Unknown, parts, inFlow)
   def apply(loc: SourceLocation, parts: IndexedSeq[YPart]): YSequence = YSequence(loc, parts, inFlow = false)
   def apply(loc: SourceLocation, parts: IndexedSeq[YPart], inFlow: Boolean): YSequence = new YSequence(loc, parts, inFlow)
 
   def apply(elems: YNode*)(implicit sourceName: String = ""): YSequence =
-    new YSequence(SourceLocation(sourceName), elems.toArray[YNode], inFlow = false)
+    new YSequence(SourceLocation(sourceName), elems.toArray[YNode], false)
 }
