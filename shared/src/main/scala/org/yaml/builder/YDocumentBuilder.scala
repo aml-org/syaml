@@ -62,7 +62,7 @@ class YDocumentBuilder extends DocBuilder[YPart] {
     case Int   => scalar.value.asInstanceOf[Long]
   }
 
-  private def createMapNode(f: Entry[YPart] => Unit) = {
+  private def createMapNode(f: Entry[YPart] => Unit, inFlow: Boolean = false) = {
     val builder                                  = new ArrayBuffer[YPart]
     def addEntry(key: String, node: YNode): Unit = builder += YMapEntry(YNode(key), node)
 
@@ -72,7 +72,7 @@ class YDocumentBuilder extends DocBuilder[YPart] {
 
     }
     f(b)
-    YNode(YMap(builder.result, ""), YType.Map)
+    YNode(YMap(builder.result, "", inFlow), YType.Map)
   }
   private def createSeqNode(f: Part[YPart] => Unit) = YNode(YSequence(createPartBuilder(f).result), YType.Seq)
 }

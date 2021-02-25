@@ -75,7 +75,7 @@ object YDocument {
                        YMapEntry(key, value)
                      }
                      .toArray[YPart],
-                   sourceName))
+                   sourceName, inFlow = false))
       }
   }
 
@@ -186,10 +186,10 @@ object YDocument {
     node
   }
 
-  private def createMapNode(f: EntryBuilder => Unit, sourceName: String) = {
+  private def createMapNode(f: EntryBuilder => Unit, sourceName: String, inFlow: Boolean = false) = {
     val b = new EntryBuilder(sourceName)
     f(b)
-    YNode(YMap(b.builder.result, sourceName), YType.Map)
+    YNode(YMap(b.builder.result, sourceName, inFlow), YType.Map)
   }
 
 }

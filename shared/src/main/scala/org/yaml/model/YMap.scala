@@ -8,10 +8,13 @@ import scala.language.dynamics
 /**
   * A Yaml Map
   */
-class YMap private (location: SourceLocation, parts: IndexedSeq[YPart]) extends YValue(location, parts) {
+class YMap private (location: SourceLocation, parts: IndexedSeq[YPart], inFlow: Boolean) extends YValue(location, parts) {
 
   /** The Map Entries in order */
   val entries: IndexedSeq[YMapEntry] = parts.collect { case a: YMapEntry => a }.toArray[YMapEntry]
+
+
+  def isInFlow: Boolean = inFlow
 
   /** The Map */
   val map: Map[YNode, YNode] = {
@@ -35,9 +38,9 @@ class YMap private (location: SourceLocation, parts: IndexedSeq[YPart]) extends 
 }
 
 object YMap {
-  def apply(location: SourceLocation, c: IndexedSeq[YPart]): YMap = new YMap(location, c)
-  def apply(c: IndexedSeq[YPart], sourceName: String): YMap       = new YMap(SourceLocation(sourceName), c)
-  val empty                                                       = YMap(IndexedSeq.empty, "")
+  def apply(location: SourceLocation, c: IndexedSeq[YPart], inFlow: Boolean = false): YMap = new YMap(location, c, inFlow)
+  def apply(c: IndexedSeq[YPart], sourceName: String, inFlow: Boolean): YMap       = YMap(SourceLocation(sourceName), c, inFlow)
+  val empty: YMap = YMap(IndexedSeq.empty, "", inFlow = false)
 }
 
 class YMapEntry private (val key: YNode, val value: YNode, location: SourceLocation, parts: IndexedSeq[YPart])

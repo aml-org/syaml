@@ -137,6 +137,12 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
       if (tokens.nonEmpty) parts += YNonContent(createArray(tokens))
 
     def location(): SourceLocation = first to lexer.tokenData.range
+
+    def containsFlowChars(parts: Array[YPart]): Boolean =
+      parts.exists {
+        case ync: YNonContent => ync.tokens.exists(t => t.text == "[" || t.text == "{")
+        case _ => false
+      }
   }
 
   private class DocBuilder extends YamlBuilder {
@@ -207,26 +213,28 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
     }
   }
 
-  private class SeqBuilder extends YamlBuilder {
+  private class SeqBuilder() extends YamlBuilder {
     override def create(): Unit = {
-      val v = YSequence(location(), buildParts())
+      val parts = buildParts()
+      val v = YSequence(location(), parts, containsFlowChars(parts))
       pop(v)
       current.setValue(v, YType.Seq)
     }
   }
 
-  private class MapBuilder extends YamlBuilder {
+  private class MapBuilder() extends YamlBuilder {
     override def create(): Unit = {
       val parts = buildParts()
       duplicates(parts)
-      val v = YMap(location(), parts)
+      val v = YMap(location(), parts, containsFlowChars(parts))
       pop(v)
       current.setValue(v, YType.Map)
     }
   }
 
-  private class PairBuilder extends YamlBuilder {
-    override def create(): Unit = pop(YMapEntry(location(), buildParts()))
+  private class PairBuilder() extends YamlBuilder {
+    override def create(): Unit =
+      pop(YMapEntry(location(), buildParts()))
   }
 
   private class CommentBuilder extends YamlBuilder {

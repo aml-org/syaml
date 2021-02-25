@@ -6,13 +6,16 @@ import org.mulesoft.lexer.SourceLocation.Unknown
 /**
   * A Yaml Sequence
   */
-class YSequence private (location: SourceLocation, parts: IndexedSeq[YPart]) extends YValue(location, parts) {
+class YSequence private (location: SourceLocation, parts: IndexedSeq[YPart], inFlow: Boolean) extends YValue(location, parts) {
 
   /** The Sequence nodes */
   val nodes: IndexedSeq[YNode] = parts.collect { case a: YNode => a }.toArray[YNode]
 
   /** Returns true if the Sequence does not have any node */
   def isEmpty: Boolean = nodes.isEmpty
+
+
+  def isInFlow: Boolean = inFlow
 
   override def hashCode(): Int = nodes.hashCode
 
@@ -26,11 +29,13 @@ class YSequence private (location: SourceLocation, parts: IndexedSeq[YPart]) ext
 }
 
 object YSequence {
-  val empty = new YSequence(Unknown, IndexedSeq.empty)
+  val empty = new YSequence(Unknown, IndexedSeq.empty, false)
 
-  def apply(parts: IndexedSeq[YPart]): YSequence                      = new YSequence(Unknown, parts)
-  def apply(loc: SourceLocation, parts: IndexedSeq[YPart]): YSequence = new YSequence(loc, parts)
+  def apply(parts: IndexedSeq[YPart]): YSequence                      = YSequence(Unknown, parts)
+  def apply(parts: IndexedSeq[YPart], inFlow: Boolean): YSequence     = new YSequence(Unknown, parts, inFlow)
+  def apply(loc: SourceLocation, parts: IndexedSeq[YPart]): YSequence = YSequence(loc, parts, inFlow = false)
+  def apply(loc: SourceLocation, parts: IndexedSeq[YPart], inFlow: Boolean): YSequence = new YSequence(loc, parts, inFlow)
 
   def apply(elems: YNode*)(implicit sourceName: String = ""): YSequence =
-    new YSequence(SourceLocation(sourceName), elems.toArray[YNode])
+    new YSequence(SourceLocation(sourceName), elems.toArray[YNode], inFlow = false)
 }

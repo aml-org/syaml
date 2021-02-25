@@ -105,7 +105,7 @@ class JsonParser private[parser] (val lexer: JsonLexer)(
 
     val parts = current.buildParts()
     duplicates(parts)
-    val v = YMap(sl, parts)
+    val v = YMap(sl, parts, inFlow = true)
     stackParts(buildNode(v, YType.Map.tag))
     r
   }
@@ -115,7 +115,7 @@ class JsonParser private[parser] (val lexer: JsonLexer)(
     val r  = parseList(BeginSequence, EndSequence, SequenceValueParser()) // should check if i parse something? empty pop if not?
     val sl = current.location()
     if (r) consume()
-    val v = YSequence(sl, current.buildParts())
+    val v = YSequence(sl, current.buildParts(), inFlow = true)
     stackParts(buildNode(v, YType.Seq.tag))
     r
   }

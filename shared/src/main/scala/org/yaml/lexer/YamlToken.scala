@@ -71,6 +71,12 @@ object YamlToken {
   /** Line break folded to content space. */
   final val LineFold = new YamlToken("LineFold", "l")
 
+  /** Begins mapping content */
+  final val BeginMapping = new YamlToken("BeginMapping", "M")
+
+  /** Ends mapping content */
+  final val EndMapping = new YamlToken("EndMapping", "m")
+
   /** Begins complete node */
   final val BeginNode = new YamlToken("BeginNode", "N")
 
@@ -89,23 +95,17 @@ object YamlToken {
   /** Ends node properties */
   final val EndProperties = new YamlToken("EndProperties", "p")
 
-  /** Begins alias */
-  final val BeginAlias = new YamlToken("BeginAlias", "R")
-
-  /** Ends alias */
-  final val EndAlias = new YamlToken("EndAlias", "r")
-
   /** Begins sequence content */
   final val BeginSequence = new YamlToken("BeginSequence", "Q")
 
   /** Ends sequence content */
   final val EndSequence = new YamlToken("EndSequence", "q")
 
-  /** Begins mapping content */
-  final val BeginMapping = new YamlToken("BeginMapping", "M")
+  /** Begins alias */
+  final val BeginAlias = new YamlToken("BeginAlias", "R")
 
-  /** Ends mapping content */
-  final val EndMapping = new YamlToken("EndMapping", "m")
+  /** Ends alias */
+  final val EndAlias = new YamlToken("EndAlias", "r")
 
   /** Begins scalar content */
   final val BeginScalar = new YamlToken("BeginScalar", "S")
