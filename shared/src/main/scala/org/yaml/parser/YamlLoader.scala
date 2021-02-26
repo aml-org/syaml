@@ -81,6 +81,7 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
     val metaTextBuilder = new StringBuilder
     var escaping        = false
     var inHandle        = false
+    var inFlow          = false
 
     var value: YValue = _
 
@@ -111,7 +112,15 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
       escaping = false
     }
 
-    def processIndicator(): Unit = if (escaping || inHandle) metaTextBuilder.append(lexer.tokenText)
+    def processIndicator(): Unit =
+      if (escaping || inHandle) metaTextBuilder.append(lexer.tokenText)
+      else if (keepTokens) containsFlowChars(lexer.tokenText)
+
+    def containsFlowChars(chars: CharSequence): Unit =
+      chars.charAt(0) match {
+        case '{' | '[' => inFlow = true
+        case _ =>
+      }
 
     def buildParts(): Array[YPart] = {
       addCurrentToken()
@@ -138,11 +147,6 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
 
     def location(): SourceLocation = first to lexer.tokenData.range
 
-    def containsFlowChars(parts: Array[YPart]): Boolean =
-      parts.exists {
-        case ync: YNonContent => ync.tokens.exists(t => t.text == "[" || t.text == "{")
-        case _ => false
-      }
   }
 
   private class DocBuilder extends YamlBuilder {
@@ -216,7 +220,7 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
   private class SeqBuilder() extends YamlBuilder {
     override def create(): Unit = {
       val parts = buildParts()
-      val v = YSequence(location(), parts, containsFlowChars(parts))
+      val v = YSequence(location(), parts, inFlow)
       pop(v)
       current.setValue(v, YType.Seq)
     }
@@ -226,7 +230,7 @@ private[parser] class YamlLoader(val lexer: YamlLexer,
     override def create(): Unit = {
       val parts = buildParts()
       duplicates(parts)
-      val v = YMap(location(), parts, containsFlowChars(parts))
+      val v = YMap(location(), parts, inFlow)
       pop(v)
       current.setValue(v, YType.Map)
     }
