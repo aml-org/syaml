@@ -57,7 +57,7 @@ trait JsonParserTest extends FunSuite with Matchers {
 
   test("Parse map with only scalar") {
     val errors = getErrorsFor(jsonDir / "map-with-scalar.json")
-    assert(errors.lengthCompare(2) == 0)
+    assert(errors.lengthCompare(3) == 0)
     assert(errors.head.error.getMessage.startsWith("Syntax error : Expecting ':' but '}' found"))
 
   }
@@ -190,6 +190,30 @@ trait JsonParserTest extends FunSuite with Matchers {
     val parts = JsonParser(jsonFile.read())(eh).parse()
     assert(parts.collectFirst({case d:YDocument => d}).get.as[YMap].entries.length == 2)
     assert(eh.errors.size == 5)
+  }
+
+  test("test recovery bad entry 5"){
+    val jsonFile = jsonDir / "incomplete-entry-5.json"
+    val eh = TestErrorHandler()
+    val parts = JsonParser(jsonFile.read())(eh).parse()
+    assert(parts.collectFirst({case d:YDocument => d}).get.as[YMap].entries.length == 1)
+    assert(eh.errors.size == 3)
+  }
+
+  test("test recovery bad entry 6"){
+    val jsonFile = jsonDir / "incomplete-entry-6.json"
+    val eh = TestErrorHandler()
+    val parts = JsonParser(jsonFile.read())(eh).parse()
+    assert(parts.collectFirst({case d:YDocument => d}).get.as[YMap].entries.length == 2)
+    assert(eh.errors.size == 1)
+  }
+
+  test("test recovery bad entry 7"){
+    val jsonFile = jsonDir / "incomplete-entry-7.json"
+    val eh = TestErrorHandler()
+    val parts = JsonParser(jsonFile.read())(eh).parse()
+    assert(parts.collectFirst({case d:YDocument => d}).get.as[YMap].entries.length == 2)
+    assert(eh.errors.size == 3)
   }
 
   test("test recovery bad value in seq 1"){

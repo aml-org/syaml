@@ -230,11 +230,16 @@ class JsonParser private[parser] (val lexer: JsonLexer)(
           skipWhiteSpace()
           current.addNonContent()
         }
-        k & (parseValue() || indicator)
+        k & ((parseValue() || indicator) || saveEntry())
       } else {
         advanceToByText((Indicator, Some(",")), (EndMapping, None))
         false
       }
+    }
+
+    private def saveEntry(): Boolean = {
+      reportError("Expected entry")
+      true
     }
 
     private def parseValue(): Boolean = {
