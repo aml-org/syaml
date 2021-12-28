@@ -1,4 +1,5 @@
 #!groovy
+@Library('amf-jenkins-library') _
 
 pipeline {
   agent {
@@ -59,14 +60,10 @@ pipeline {
       }
       steps {
         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'github-salt', passwordVariable: 'GITHUB_PASS', usernameVariable: 'GITHUB_USER']]) {
-          sh '''#!/bin/bash
-                echo "about to tag the commit with the new version:"
-                version=$(sbt version | tail -n 1 | grep -o '[0-9].[0-9].[0-9].*')
-                url="https://${GITHUB_USER}:${GITHUB_PASS}@github.com/${GITHUB_ORG}/${GITHUB_REPO}"
-                git tag $version
-                git push $url $version
-                echo "tagging successful"
-          '''
+          script {
+            def version = sbtArtifactVersion("syamlJVM")
+            tagCommitToGithub(version)
+          }
         }
       }
     }
