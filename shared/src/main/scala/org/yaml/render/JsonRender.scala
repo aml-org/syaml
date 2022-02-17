@@ -1,8 +1,5 @@
 package org.yaml.render
 
-import java.io.StringWriter
-
-import org.mulesoft.common.core
 import org.mulesoft.common.core._
 import org.mulesoft.common.io.Output
 import org.mulesoft.common.io.Output._
@@ -10,6 +7,8 @@ import org.mulesoft.lexer.AstToken
 import org.yaml.lexer.YamlToken
 import org.yaml.model.YType._
 import org.yaml.model._
+
+import java.io.StringWriter
 
 /**
   * Json Render
@@ -133,7 +132,7 @@ class JsonRender[W: Output] private (private val writer: W,
       case Float =>
         val s = scalar.value.toString
         if (s.indexOf('.') == -1 && !s.contains('e') && !s.contains('E')) s + ".0" else s // Bug in scala-js toString
-      case Null => "null"
+      case Null => ""
       case _ =>
         scalar.value match {
           case s: String => '"' + s.encode(encodeNonAscii = options.encodesNonAscii) + '"'
