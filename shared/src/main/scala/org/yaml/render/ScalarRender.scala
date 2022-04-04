@@ -55,6 +55,7 @@ object ScalarRender {
       return if (mustBeString || !mark.plain) DoubleQuoteMark else NoMark
 
     if (text.head == ' ' || text.endsWith("\n\n")) return DoubleQuoteMark
+    if (text == "-") return DoubleQuoteMark
 
     var oneLine   = true
     var allSpaces = true
