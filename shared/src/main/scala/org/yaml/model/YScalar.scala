@@ -6,6 +6,7 @@ import org.mulesoft.common.client.lexical.{PositionRange, SourceLocation}
 import java.util.Objects.{hashCode => hash}
 import org.mulesoft.common.core.Strings
 import org.mulesoft.lexer.AstToken
+import org.yaml.lexer.YamlToken.Indent
 import org.yaml.parser.ScalarParser
 
 /**
@@ -67,6 +68,23 @@ object YScalar {
   def withLocation(text: String, tag: YType, loc: SourceLocation): YScalar = {
     val r = ScalarParser.parse(text, NoMark, tag.tag, loc)
     new YScalar(r.value, text, NoMark, loc, IndexedSeq.empty)
+  }
+
+  /**
+    * change indentation on multiline scalars
+    */
+  def withIndentation(r: YScalar, indent: Int): YScalar = {
+    val child = r.children.headOption.map {
+      case nc: YNonContent =>
+        nc.tokens.map {
+          case t if t.tokenType == Indent =>
+            AstToken(Indent, " " * indent, r.location)
+          case t => t
+        }
+      case _ => Seq.empty
+    }.map(tokens => IndexedSeq(YNonContent(tokens.toIndexedSeq))).getOrElse(IndexedSeq.empty)
+
+    new YScalar(r.value, r.text, r.mark, r.location, child)
   }
 }
 
