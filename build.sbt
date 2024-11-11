@@ -58,7 +58,7 @@ lazy val branch     = sys.env.getOrElse("BRANCH_NAME", "develop")
 
 sonarProperties := Map(
     "sonar.login"             -> sonarToken,
-    "sonar.projectKey"        -> "mulesoft.syaml",
+    "sonar.projectKey"        -> "mulesoft.syaml.gec",
     "sonar.projectName"       -> "syaml",
     "sonar.projectVersion"    -> version.value,
     "sonar.sourceEncoding"    -> "UTF-8",
