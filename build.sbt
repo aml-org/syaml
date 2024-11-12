@@ -1,11 +1,12 @@
 import sbt.Keys.{libraryDependencies, resolvers}
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
-ThisBuild / version := getVersion(2, 0)
+//ThisBuild / version := getVersion(2, 0)
+ThisBuild / version := "2.1.0-java21-0"
 ThisBuild / scalaVersion := "2.12.20"
 
-val scalaCommonVersion     = "2.1.0-JAVA21-INTERNAL"
-val scalaCommonTestVersion = "0.2.0-JAVA21-INTERNAL"
+val scalaCommonVersion     = "2.1.0-java21-0"
+val scalaCommonTestVersion = "0.2.0-java21-1"
 
 val settings = Common.settings ++ Common.publish ++ Seq(
     organization := "org.mule.syaml",
