@@ -2,7 +2,7 @@ import sbt.Keys.{libraryDependencies, resolvers}
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
 
 ThisBuild / version := getVersion(2, 0)
-ThisBuild / scalaVersion := "2.12.18"
+ThisBuild / scalaVersion := "2.12.20"
 
 val scalaCommonVersion     = "2.1.0-JAVA21-INTERNAL"
 val scalaCommonTestVersion = "0.2.0-JAVA21-INTERNAL"
