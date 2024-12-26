@@ -1,0 +1,9 @@
+File: multiline-string-with-escape-character.yaml
+YD                                                 [(1,0)-(3,0)]
+  YI  O                                            [(1,0)-(1,0)]
+  YN                                               [(1,0)-(2,6)]
+    YI  N                                          [(1,0)-(1,0)]
+    YS  S I T E I b e E I t e T I s                [(1,0)-(2,6)]
+    YI  n                                          [(2,6)-(2,6)]
+  YI  b o                                          [(2,6)-(3,0)]
+19 tokens dumped.

@@ -494,7 +494,7 @@ final class YamlLexer private (
           emitText()
           emit(BeginEscape)
           emitIndicator()
-          val nl = currentChar == '\n'
+          val nl = (currentChar == '\n') || (currentChar == '\r' && lookAhead(1) == '\n')
           if (nl) breakNonContent()
           else
             escapeSeq(currentChar) match {
