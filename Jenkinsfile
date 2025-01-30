@@ -73,22 +73,22 @@ pipeline {
                 }
             }
         }
-        stage('Tag version') {
-            when {
-                anyOf {
-                    branch 'master'
-                }
-            }
-            steps {
-                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'github-salt', passwordVariable: 'GITHUB_PASS', usernameVariable: 'GITHUB_USER']]) {
-                    script {
-                        lastStage = env.STAGE_NAME
-                        def version = sbtArtifactVersion("syamlJVM")
-                        tagCommitToGithub(version)
-                    }
-                }
-            }
-        }
+        // stage('Tag version') {
+        //     when {
+        //         anyOf {
+        //             branch 'master'
+        //         }
+        //     }
+        //     steps {
+        //         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'github-salt', passwordVariable: 'GITHUB_PASS', usernameVariable: 'GITHUB_USER']]) {
+        //             script {
+        //                 lastStage = env.STAGE_NAME
+        //                 def version = sbtArtifactVersion("syamlJVM")
+        //                 tagCommitToGithub(version)
+        //             }
+        //         }
+        //     }
+        // }
     }
     post {
         unsuccessful {
