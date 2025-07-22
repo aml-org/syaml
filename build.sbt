@@ -4,6 +4,10 @@ import sbtcrossproject.CrossPlugin.autoImport.crossProject
 ThisBuild / version := getVersion(2, 1)
 ThisBuild / scalaVersion := "2.12.20"
 
+ThisBuild / organizationName := "MuleSoft, Inc."
+ThisBuild / organizationHomepage := Some(url("http://www.mulesoft.com"))
+ThisBuild / licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
+
 val scalaCommonVersion     = "2.1.102"
 val scalaCommonTestVersion = "0.2.15"
 
